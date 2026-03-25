@@ -1,85 +1,134 @@
+/**
+ * SISTEM UJIAN ONLINE SMK - FRONTEND FINAL (FIXED)
+ * Update: 25 Maret 2026
+ * Developer: Pak Dwi Frediawan
+ */
+
 const BASE_URL = "https://script.google.com/macros/s/AKfycbwTf7JYp_odNXSj9Cc2DvFgk-voYrcfBNNEQHKBKVkI1cEYxJNDwCLU9_zzVAWJ3336/exec";
 
 let timerInterval;
 let dataSiswaAktif = {};
 let ujianDimulai = false;
 
+// ==========================================
+// 1. FUNGSI LOGIN & AUTH
+// ==========================================
+
 async function prosesLogin() {
-    const user = document.getElementById('username').value;
-    if(!user) return alert("Masukkan NIS!");
+    const userInput = document.getElementById('username').value;
+    if(!userInput) return alert("Masukkan NIS Anda!");
 
     const btn = document.getElementById('btn-login');
-    btn.innerText = "Checking...";
+    btn.innerText = "Memverifikasi...";
     btn.disabled = true;
 
     try {
-        const resp = await fetch(`${BASE_URL}?action=login&user=${user}`);
+        // Mengirim parameter action=login agar Apps Script mengenali perintahnya
+        const resp = await fetch(`${BASE_URL}?action=login&user=${encodeURIComponent(userInput)}`);
         const res = await resp.json();
 
         if (res.status === "Sukses") {
             if (res.izin === "Ya") {
-                dataSiswaAktif = res;
+                dataSiswaAktif = res; 
+                
+                // Transisi tampilan
                 document.getElementById('login-section').style.display = 'none';
                 document.getElementById('exam-section').style.display = 'block';
                 
+                // Update Header info siswa
                 document.querySelector('.nama').innerText = res.nama;
                 document.querySelector('.kelas-jurus').innerText = `${res.kelas} | ${res.jurusan}`;
                 
+                // Ambil status jadwal & muat soal
                 cekStatusDanLoadSoal(res.kelas, res.jurusan);
+                
                 ujianDimulai = true;
-                aktifkanKeamanan();
+                aktifkanKeamanan(); 
+
             } else {
-                alert("Akses ditolak oleh Admin.");
-                resetBtn();
+                alert("Akses Ditolak: Anda belum diberi izin ujian oleh Admin.");
+                resetLoginButton();
             }
         } else {
             alert(res.pesan);
-            resetBtn();
+            resetLoginButton();
         }
-    } catch (e) {
-        alert("Koneksi gagal.");
-        resetBtn();
+    } catch (err) {
+        console.error(err);
+        alert("Gagal terhubung ke server database. Pastikan internet stabil!");
+        resetLoginButton();
     }
 }
 
-function resetBtn() {
+function resetLoginButton() {
     const btn = document.getElementById('btn-login');
     btn.innerText = "Mulai Ujian";
     btn.disabled = false;
 }
 
-async function cekStatusDanLoadSoal(kelas, jurusan) {
-    const respStatus = await fetch(`${BASE_URL}?action=getStatusUjian&kelas=${kelas}&jurusan=${jurusan}`);
-    const resStatus = await respStatus.json();
+// ==========================================
+// 2. LOGIKA UJIAN (TIMER & SOAL)
+// ==========================================
 
-    if(resStatus.status === "Aktif") {
-        mulaiTimer(resStatus.durasi);
-        const respSoal = await fetch(`${BASE_URL}?action=getSoal&kelas=${kelas}&jurusan=${jurusan}`);
-        const soal = await respSoal.json();
-        renderSoal(soal);
-    } else {
-        alert("Ujian belum dibuka.");
-        location.reload();
+async function cekStatusDanLoadSoal(kelas, jurusan) {
+    try {
+        // 1. Cek Status Ujian (Mengirim action=getStatusUjian)
+        const respStatus = await fetch(`${BASE_URL}?action=getStatusUjian&kelas=${encodeURIComponent(kelas)}&jurusan=${encodeURIComponent(jurusan)}`);
+        const resStatus = await respStatus.json();
+
+        if(resStatus.status === "Aktif") {
+            mulaiTimer(resStatus.durasi || 60);
+            
+            // 2. Ambil Soal (Mengirim action=getSoal)
+            const container = document.getElementById('question-container');
+            container.innerHTML = "<div class='soal-item'><p style='text-align:center;'>Sedang sinkronisasi soal...</p></div>";
+            
+            const respSoal = await fetch(`${BASE_URL}?action=getSoal&kelas=${encodeURIComponent(kelas)}&jurusan=${encodeURIComponent(jurusan)}`);
+            const soal = await respSoal.json();
+            
+            renderSoal(soal);
+        } else {
+            alert("MAAF: Jadwal ujian untuk tingkat/jurusan Anda belum dibuka atau sudah ditutup.");
+            location.reload();
+        }
+    } catch (e) {
+        console.error(e);
+        alert("Terjadi kesalahan saat memuat data ujian.");
     }
 }
 
 function renderSoal(soalArray) {
     const container = document.getElementById('question-container');
-    container.innerHTML = "";
+    container.innerHTML = ""; 
+
+    if(!soalArray || soalArray.length === 0) {
+        container.innerHTML = "<div class='soal-item'><p style='text-align:center;color:red;'>Belum ada soal yang diaktifkan untuk Anda.</p></div>";
+        return;
+    }
+
     soalArray.forEach((item, index) => {
         let html = `<div class="soal-item" data-id="${item.id}" data-tipe="${item.tipe}">
-                    <p style="font-weight:600; margin-bottom:15px;">${index+1}. ${item.pertanyaan}</p>`;
+                    <p class="soal-text">${index+1}. ${item.pertanyaan}</p>`;
         
+        // Tipe Pilihan Ganda & Kompleks
         if(item.tipe === "PG" || item.tipe === "PG_Kompleks") {
             const inputType = (item.tipe === "PG") ? "radio" : "checkbox";
             item.opsi.forEach(opt => {
-                html += `<label class="option-label"><input type="${inputType}" name="q${item.id}" value="${opt}" style="margin-right:10px;"> ${opt}</label>`;
+                html += `<label class="option-label">
+                            <input type="${inputType}" name="q${item.id}" value="${opt}"> 
+                            <span>${opt}</span>
+                         </label>`;
             });
-        } else if(item.tipe === "Isian") {
-            html += `<input type="text" name="q${item.id}" placeholder="Jawaban singkat...">`;
-        } else {
-            html += `<textarea name="q${item.id}" rows="4" placeholder="Ketik jawaban Anda..."></textarea>`;
+        } 
+        // Tipe Isian Singkat
+        else if(item.tipe === "Isian") {
+            html += `<input type="text" name="q${item.id}" placeholder="Ketik jawaban singkat...">`;
+        } 
+        // Tipe Esai / Menjodohkan
+        else {
+            html += `<textarea name="q${item.id}" rows="4" placeholder="Tulis jawaban lengkap..."></textarea>`;
         }
+        
         html += `</div>`;
         container.innerHTML += html;
     });
@@ -87,36 +136,54 @@ function renderSoal(soalArray) {
 
 function mulaiTimer(menit) {
     let detik = menit * 60;
+    const timerEl = document.getElementById('timer');
+    
     timerInterval = setInterval(() => {
         let h = Math.floor(detik / 3600);
         let m = Math.floor((detik % 3600) / 60);
         let s = detik % 60;
-        document.getElementById('timer').innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+        
+        timerEl.innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+        
         if (detik <= 0) {
             clearInterval(timerInterval);
+            alert("WAKTU HABIS! Jawaban Anda akan dikirim otomatis.");
             submitJawaban(true);
         }
         detik--;
     }, 1000);
 }
 
-async function submitJawaban(auto = false) {
-    if(!auto && !confirm("Kirim jawaban sekarang?")) return;
-    
-    const btn = document.querySelector('.btn-submit');
-    btn.innerText = "Mengirim...";
-    btn.disabled = true;
+// ==========================================
+// 3. PENGIRIMAN JAWABAN (POST)
+// ==========================================
 
-    const soalEl = document.querySelectorAll('.soal-item');
-    let jwb = [];
-    soalEl.forEach(el => {
-        const id = el.dataset.id;
-        const tipe = el.dataset.tipe;
-        let val = "";
-        if(tipe === "PG") val = el.querySelector('input:checked')?.value || "";
-        else if(tipe === "PG_Kompleks") val = Array.from(el.querySelectorAll('input:checked')).map(i => i.value);
-        else val = el.querySelector('input[type="text"], textarea').value;
-        jwb.push({id, val});
+async function submitJawaban(isAuto = false) {
+    if(!isAuto && !confirm("Apakah Anda yakin ingin mengakhiri ujian?")) return;
+
+    clearInterval(timerInterval);
+    const btnSubmit = document.querySelector('.btn-submit');
+    btnSubmit.innerText = "Mengirim...";
+    btnSubmit.disabled = true;
+
+    const soalElements = document.querySelectorAll('.soal-item');
+    let berkasJawaban = [];
+
+    soalElements.forEach(el => {
+        const id = el.getAttribute('data-id');
+        const tipe = el.getAttribute('data-tipe');
+        let jawabanSiswa = "";
+
+        if(tipe === "PG") {
+            const checked = el.querySelector('input:checked');
+            jawabanSiswa = checked ? checked.value : "";
+        } else if(tipe === "PG_Kompleks") {
+            jawabanSiswa = Array.from(el.querySelectorAll('input:checked')).map(i => i.value);
+        } else {
+            const input = el.querySelector('input[type="text"], textarea');
+            jawabanSiswa = input ? input.value : "";
+        }
+        berkasJawaban.push({ id, jawaban: jawabanSiswa });
     });
 
     const payload = {
@@ -124,24 +191,49 @@ async function submitJawaban(auto = false) {
         nama: dataSiswaAktif.nama,
         kelas: dataSiswaAktif.kelas,
         jurusan: dataSiswaAktif.jurusan,
-        jawaban: jwb
+        jawaban: berkasJawaban
     };
 
-    await fetch(BASE_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-    alert("Jawaban terkirim!");
-    location.reload();
+    try {
+        await fetch(BASE_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify(payload)
+        });
+        
+        alert("Jawaban Berhasil Terkirim!\nTerima kasih telah mengikuti ujian.");
+        location.reload();
+
+    } catch (e) {
+        alert("Koneksi gagal saat mengirim. Silakan lapor pengawas!");
+        btnSubmit.innerText = "Coba Kirim Lagi";
+        btnSubmit.disabled = false;
+    }
 }
 
-function aktifkanKeamanan() {
-    // Blokir klik kanan
-    document.addEventListener('contextmenu', e => e.preventDefault());
+// ==========================================
+// 4. SISTEM KEAMANAN (ANTI-CURANG)
+// ==========================================
 
-    // Peringatan pindah tab (Hanya muncul jika ujian sedang aktif)
+function aktifkanKeamanan() {
+    if(!ujianDimulai) return;
+
+    // Blokir Klik Kanan & Copy
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('selectstart', e => e.preventDefault());
+
+    // Blokir Tombol Pintasan (F12, Ctrl+U, dll)
+    document.onkeydown = function(e) {
+        if(e.keyCode == 123) return false;
+        if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false;
+        if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false;
+        if(e.ctrlKey && (e.keyCode == 'C'.charCodeAt(0) || e.keyCode == 'V'.charCodeAt(0))) return false;
+    };
+
+    // Deteksi Pindah Tab (Hanya tampilkan alert)
     window.addEventListener('blur', () => {
         if(ujianDimulai) {
-            console.log("Siswa berpindah halaman");
-            // Kita gunakan alert agar siswa kembali ke halaman ujian
-            alert("Peringatan: Dilarang pindah tab selama ujian berlangsung!");
+            alert("PERINGATAN: Dilarang keluar dari halaman ujian! Aktivitas Anda dicatat oleh sistem.");
         }
     });
 }
