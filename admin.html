@@ -1,0 +1,19 @@
+function gantiTipeSoal() {
+    const tipe = document.getElementById('select-tipe').value;
+    const container = document.getElementById('opsi-container');
+    container.innerHTML = ""; // Reset
+
+    if (tipe === "PG") {
+        container.innerHTML = `
+            <input type="text" placeholder="Opsi A">
+            <input type="text" placeholder="Opsi B">
+            <input type="text" placeholder="Kunci Jawaban (A/B/..)">
+        `;
+    } else if (tipe === "Matching") {
+        container.innerHTML = `
+            <p>Masukkan pasangan (Format: Kiri=Kanan, pisah koma)</p>
+            <textarea id="matching-pair"></textarea>
+        `;
+    }
+    // Lanjutkan untuk tipe lainnya...
+}
