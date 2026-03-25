@@ -1,4 +1,4 @@
-const BASE_URL = "https://script.google.com/macros/s/AKfycbxC7sXvqou16og4vGA8uDS85iQ_orAHmZtQaUdP09x-LPBtjfBZTe9fxqul8MtMcTn4/exec";
+const BASE_URL = "https://script.google.com/macros/s/AKfycbwcqvSmKodNdTYsW0L4YyMpM7sW8qZ4mU1U4jZ0lP3Yd2YM3yhb5gl4Ppk_Tvt3uDAe/exec";
 
 let timerInterval, dataSiswaAktif = {}, ujianDimulai = false;
 
