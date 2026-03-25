@@ -2,59 +2,29 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Ujian Online SMK</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ujian Online SMK</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="app">
-        <section id="login-section">
+        <div id="login-section" class="card">
             <h2>Login Siswa</h2>
-            <input type="text" id="username" placeholder="Masukkan NIS / Username">
-            <button onclick="prosesLogin()">Masuk Ujian</button>
-        </section>
+            <p>Silakan masukkan NIS Anda untuk memulai ujian.</p>
+            <input type="number" id="username" placeholder="Masukkan NIS Anda..." pattern="\d*">
+            <button onclick="prosesLogin()" id="btn-login">Masuk Ujian</button>
+        </div>
 
-        <section id="exam-section" style="display:none;">
-            <div class="header-exam">
-                <span id="timer">Waktu: 00:00:00</span>
-                <span id="info-siswa"></span>
+        <div id="exam-section" class="card" style="display:none;">
+            <div class="header-fixed">
+                <div id="timer">00:00:00</div>
+                <div id="info-siswa"></div>
             </div>
-            <hr>
-            <div id="question-container">
-                </div>
-            <button onclick="submitJawaban()">Kirim Jawaban</button>
-        </section>
+            <div id="question-container"></div>
+            <button onclick="submitJawaban()" class="btn-submit">Kirim Jawaban</button>
+        </div>
     </div>
-
-    <script>
-        const BASE_URL = "URL_WEB_APP_ANDA_DISINI"; // Ganti dengan URL Deploy Apps Script
-
-        async function prosesLogin() {
-            const user = document.getElementById('username').value;
-            // Tampilkan loading...
-            const response = await fetch(`${BASE_URL}?action=login&user=${user}`);
-            const res = await response.json();
-
-            if (res.status === "Sukses") {
-                if (res.izin === "Ya") {
-                    document.getElementById('login-section').style.display = 'none';
-                    document.getElementById('exam-section').style.display = 'block';
-                    document.getElementById('info-siswa').innerText = `Siswa: ${res.nama} | ${res.kelas} ${res.jurusan}`;
-                    mulaiTimer(res.durasi);
-                    loadSoal(res.kelas, res.jurusan);
-                } else {
-                    alert("Akses Ditolak: Anda belum diberi izin ujian oleh Admin.");
-                }
-            } else {
-                alert("User tidak ditemukan!");
-            }
-        }
-
-        // Keamanan: Cegah Klik Kanan & Copy Paste
-        document.addEventListener('contextmenu', event => event.preventDefault());
-        document.addEventListener('keydown', e => {
-            if (e.ctrlKey && (e.key === 'c' || e.key === 'v')) e.preventDefault();
-        });
-    </script>
+    
+    <script src="script.js"></script>
 </body>
 </html>
