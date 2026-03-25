@@ -4,7 +4,7 @@
  * Developer: Pak Dwi Frediawan
  */
 
-const BASE_URL = "https://script.google.com/macros/s/AKfycbxGcS4zbCPziD7ZFBrVUMbDcp8CK2ZArDxcq1FrpIxYY8eLEafJbgdSQck2wPXWiwDS/exec";
+const BASE_URL = "https://script.google.com/macros/s/AKfycbzYrOHZtXBQ4-B2YRe3vZxT-zU_IGT4bipM9TPrqSSy5QNLJyV-UvxgD2bG9rpJIS0h/exec";
 
 let timerInterval;
 let dataSiswaAktif = {};
