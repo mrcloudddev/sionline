@@ -1,4 +1,4 @@
-const BASE_URL = "https://script.google.com/macros/s/AKfycbwKz1yXbHfCvuWAPJQFbDqVxAEr02ISZD9xHTfTJVBXP1H1lDpjpcV1YZGzrPqaV3Pf/exec";
+const BASE_URL = "https://script.google.com/macros/s/AKfycbyNL6s3eeIUTGeS2iGFdeR7SuS66LwNk4tGZUEAD3g4l8G2hnikv5fI4ggPcoMgHjZi/exec";
 
 let timerInterval;
 let dataSiswaAktif = {};
@@ -133,8 +133,15 @@ async function submitJawaban(auto = false) {
 }
 
 function aktifkanKeamanan() {
+    // Blokir klik kanan
     document.addEventListener('contextmenu', e => e.preventDefault());
+
+    // Peringatan pindah tab (Hanya muncul jika ujian sedang aktif)
     window.addEventListener('blur', () => {
-        if(ujianDimulai) alert("Peringatan: Dilarang pindah tab!");
+        if(ujianDimulai) {
+            console.log("Siswa berpindah halaman");
+            // Kita gunakan alert agar siswa kembali ke halaman ujian
+            alert("Peringatan: Dilarang pindah tab selama ujian berlangsung!");
+        }
     });
 }
