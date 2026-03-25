@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Ujian Online SMK</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <section id="login-section">
+            <h2>Login Siswa</h2>
+            <input type="text" id="username" placeholder="Masukkan NIS / Username">
+            <button onclick="prosesLogin()">Masuk Ujian</button>
+        </section>
+
+        <section id="exam-section" style="display:none;">
+            <div class="header-exam">
+                <span id="timer">Waktu: 00:00:00</span>
+                <span id="info-siswa"></span>
+            </div>
+            <hr>
+            <div id="question-container">
+                </div>
+            <button onclick="submitJawaban()">Kirim Jawaban</button>
+        </section>
+    </div>
+
+    <script>
+        const BASE_URL = "URL_WEB_APP_ANDA_DISINI"; // Ganti dengan URL Deploy Apps Script
+
+        async function prosesLogin() {
+            const user = document.getElementById('username').value;
+            // Tampilkan loading...
+            const response = await fetch(`${BASE_URL}?action=login&user=${user}`);
+            const res = await response.json();
+
+            if (res.status === "Sukses") {
+                if (res.izin === "Ya") {
+                    document.getElementById('login-section').style.display = 'none';
+                    document.getElementById('exam-section').style.display = 'block';
+                    document.getElementById('info-siswa').innerText = `Siswa: ${res.nama} | ${res.kelas} ${res.jurusan}`;
+                    mulaiTimer(res.durasi);
+                    loadSoal(res.kelas, res.jurusan);
+                } else {
+                    alert("Akses Ditolak: Anda belum diberi izin ujian oleh Admin.");
+                }
+            } else {
+                alert("User tidak ditemukan!");
+            }
+        }
+
+        // Keamanan: Cegah Klik Kanan & Copy Paste
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.addEventListener('keydown', e => {
+            if (e.ctrlKey && (e.key === 'c' || e.key === 'v')) e.preventDefault();
+        });
+    </script>
+</body>
+</html>
