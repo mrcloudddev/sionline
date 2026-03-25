@@ -218,22 +218,15 @@ async function submitJawaban(isAuto = false) {
 function aktifkanKeamanan() {
     if(!ujianDimulai) return;
 
-    // Blokir Klik Kanan & Copy
+    // Blokir klik kanan
     document.addEventListener('contextmenu', e => e.preventDefault());
-    document.addEventListener('selectstart', e => e.preventDefault());
 
-    // Blokir Tombol Pintasan (F12, Ctrl+U, dll)
-    document.onkeydown = function(e) {
-        if(e.keyCode == 123) return false;
-        if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false;
-        if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false;
-        if(e.ctrlKey && (e.keyCode == 'C'.charCodeAt(0) || e.keyCode == 'V'.charCodeAt(0))) return false;
-    };
-
-    // Deteksi Pindah Tab (Hanya tampilkan alert)
+    // Deteksi pindah tab (Hapus alert agar tidak error saat kirim)
     window.addEventListener('blur', () => {
         if(ujianDimulai) {
-            alert("PERINGATAN: Dilarang keluar dari halaman ujian! Aktivitas Anda dicatat oleh sistem.");
+            console.log("Siswa pindah tab/aplikasi");
+            // Cukup berikan notifikasi kecil di pojok atau biarkan saja 
+            // agar tidak memunculkan popup yang memblokir proses kirim.
         }
     });
 }
