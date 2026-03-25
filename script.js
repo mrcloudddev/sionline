@@ -1,4 +1,4 @@
-const BASE_URL = "https://script.google.com/macros/s/AKfycbxl8GoLTAl-Px_X_AuvOWD-TjG_rZw1xl9ZJIbksuhzPIW2BGiL4gJP5NaGHWAQjRng/exec";
+const BASE_URL = "https://script.google.com/macros/s/AKfycbwXQ37TioE9J7ISJrpPX5GgIY5muMPR9yWxp5MJCqPzGDIgZ3Qo6XlFEhs4SEt6lKix/exec";
 
 let timerInterval;
 let dataSiswaAktif = {};
