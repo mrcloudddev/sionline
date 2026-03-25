@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ujian Online SMK - Professional CAT</title>
+    <title>CBT SMK - Ujian Online</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -12,14 +12,14 @@
     <div class="main-container">
         <div id="login-section" class="auth-card">
             <div class="auth-header">
-                <img src="https://img.icons8.com/fluency/96/school.png" alt="logo-sekolah">
+                <img src="https://img.icons8.com/fluency/96/school.png" alt="logo">
                 <h2>CBT SMK</h2>
-                <p>Silakan login menggunakan NIS/Username Anda.</p>
+                <p>Silakan login menggunakan NIS Anda.</p>
             </div>
             <div class="auth-body">
                 <div class="input-group">
                     <label>NIS / Username</label>
-                    <input type="number" id="username" placeholder="Contoh: 24001" pattern="\d*">
+                    <input type="number" id="username" placeholder="Masukkan NIS..." pattern="\d*">
                 </div>
                 <button onclick="prosesLogin()" class="btn-primary" id="btn-login">Mulai Ujian</button>
             </div>
@@ -30,10 +30,9 @@
                 <div class="header-content">
                     <div id="info-siswa">
                         <span class="nama">Memuat...</span>
-                        <span class="kelas-jurus">Loading Kelas</span>
+                        <span class="kelas-jurus">Loading...</span>
                     </div>
                     <div class="timer-wrapper">
-                        <img src="https://img.icons8.com/ios-filled/50/ffffff/alarm-clock.png" alt="timer">
                         <span id="timer">00:00:00</span>
                     </div>
                 </div>
