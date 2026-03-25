@@ -1,4 +1,4 @@
-const BASE_URL = "https://script.google.com/macros/s/AKfycbyi7GJcVJ2VrI5PrOumMXJSuogBhNCVFezutyFJotk/exec"; // Pastikan akhiran /exec
+const BASE_URL = "https://script.google.com/macros/s/AKfycbwsXYVeO2Z8To6ItyOGrr8hKY_g9K1j1kjrwLKawKWxq_zA5Xpi7KTemFrXR1ORNkuG/exec"; // Pastikan akhiran /exec
 
 let timerInterval;
 let dataUjian = [];
