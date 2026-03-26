@@ -3,163 +3,142 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - SMK Mandiri</title>
+    <title>Master Admin - SMK Mandiri</title>
     <style>
-        :root {
-            --sidebar-bg: #2c3e50;
-            --main-bg: #f4f6f9;
-            --primary: #3498db;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Source Sans Pro', sans-serif; }
-        body { display: flex; background: var(--main-bg); }
+        :root { --sidebar: #2c3e50; --bg: #f4f6f9; --blue: #3498db; --green: #28a745; --orange: #fd7e14; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { display: flex; background: var(--bg); }
 
         /* SIDEBAR */
-        #sidebar {
-            width: 250px; height: 100vh; background: var(--sidebar-bg);
-            color: white; position: fixed; padding: 20px 0;
-        }
-        .user-panel { padding: 20px; border-bottom: 1px solid #4b545c; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
-        .user-img { width: 45px; height: 45px; border-radius: 50%; background: #ccc; }
-        .nav-item { padding: 12px 20px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: 0.3s; }
-        .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.1); border-left: 4px solid var(--primary); }
+        #sidebar { width: 260px; height: 100vh; background: var(--sidebar); color: white; position: fixed; }
+        .side-header { padding: 20px; font-weight: bold; border-bottom: 1px solid #4b545c; text-align: center; }
+        .nav-item { padding: 15px 25px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 10px; }
+        .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.1); border-left: 5px solid var(--blue); }
 
-        /* MAIN CONTENT */
-        #content { flex: 1; margin-left: 250px; padding: 25px; }
-        .header-box { background: white; padding: 20px; border-radius: 5px; border-top: 3px solid var(--primary); margin-bottom: 25px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        /* CONTENT */
+        #main { flex: 1; margin-left: 260px; padding: 30px; }
+        .card-stat { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-box { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-top: 4px solid var(--blue); }
         
-        /* INFO BOXES (KOTAK STATISTIK) */
-        .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .info-box { background: white; display: flex; border-radius: 5px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .info-box-icon { width: 80px; display: flex; align-items: center; justify-content: center; color: white; font-size: 30px; }
-        .info-box-content { padding: 10px 15px; flex: 1; }
-        .info-box-number { font-size: 20px; font-weight: bold; display: block; }
-        .info-box-text { font-size: 14px; color: #666; }
-
-        /* TABLE & FORMS */
-        .tab-content { background: white; padding: 20px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: none; }
-        .tab-content.active { display: block; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        /* FORM & TABLE */
+        .panel { background: white; padding: 25px; border-radius: 8px; display: none; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .panel.active { display: block; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { border: 1px solid #eee; padding: 12px; text-align: left; }
         th { background: #f8f9fa; }
-        input, textarea, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 4px; }
-        .btn-blue { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold; }
-        
-        @media (max-width: 768px) { #sidebar { display: none; } #content { margin-left: 0; } }
+        input, select, textarea { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; }
+        .btn { padding: 12px 25px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; }
+        .btn-blue { background: var(--blue); } .btn-green { background: var(--green); }
     </style>
 </head>
 <body>
 
-    <div id="sidebar">
-        <div style="padding: 0 20px; font-size: 18px; font-weight: bold;">SMK Mandiri</div>
-        <div class="user-panel">
-            <div class="user-img"></div>
-            <div><span style="font-size: 14px;">Pak Dwi</span><br><span style="font-size: 12px; color: #adb5bd;">Admin</span></div>
+<div id="sidebar">
+    <div class="side-header">ADMIN SMK MANDIRI</div>
+    <div class="nav-item active" onclick="showPanel('p-dash', this)">🏠 Dashboard</div>
+    <div class="nav-item" onclick="showPanel('p-soal', this)">📝 Kelola Soal</div>
+    <div class="nav-item" onclick="showPanel('p-siswa', this)">👥 Data Siswa</div>
+    <div class="nav-item" onclick="showPanel('p-nilai', this)">📊 Hasil Ujian</div>
+    <div class="nav-item" onclick="showPanel('p-absen', this)">📸 Absensi Guru</div>
+</div>
+
+<div id="main">
+    <div id="p-dash" class="panel active">
+        <h2>Dashboard Overview</h2>
+        <div class="card-stat">
+            <div class="stat-box"><h3>Soal</h3><p id="s-soal">0</p></div>
+            <div class="stat-box"><h3>Siswa</h3><p id="s-siswa">0</p></div>
+            <div class="stat-box"><h3>Absensi</h3><p id="s-absen">0</p></div>
         </div>
-        <div class="nav-item active" onclick="switchTab('dashboard', this)">📁 Dashboard</div>
-        <div class="nav-item" onclick="switchTab('monitoring', this)">📊 Monitoring Nilai</div>
-        <div class="nav-item" onclick="switchTab('input-soal', this)">✍️ Group Soal</div>
-        <div class="nav-item" onclick="window.location.href='logout.html'">⬅️ Logout</div>
+        <button class="btn btn-green" onclick="handleBackup()">☁️ Jalankan Cloud Backup</button>
     </div>
 
-    <div id="content">
-        <div class="header-box">
-            <h2 style="color: #333;">Hai Pak Dwi</h2>
-            <p style="color: #777;">Selamat Datang Kembali di Aplikasi Ujian Online SMK Mandiri</p>
+    <div id="p-soal" class="panel">
+        <h2>Input Soal (5 Tipe)</h2>
+        <select id="tipe-soal" onchange="toggleOpsi()">
+            <option value="PG">Pilihan Ganda</option>
+            <option value="PGK">Pilihan Ganda Kompleks (Checkbox)</option>
+            <option value="IS">Isian Singkat</option>
+            <option value="MJD">Menjodohkan</option>
+            <option value="ES">Esai (Uraian)</option>
+        </select>
+        <textarea id="q-text" placeholder="Pertanyaan..."></textarea>
+        <div id="opsi-container">
+            <input id="o1" placeholder="Opsi 1 / Pasangan A">
+            <input id="o2" placeholder="Opsi 2 / Pasangan B">
+            <input id="o3" placeholder="Opsi 3 / Pasangan C">
+            <input id="o4" placeholder="Opsi 4 / Pasangan D">
         </div>
-
-        <div id="dashboard" class="tab-content active">
-            <div class="row">
-                <div class="info-box">
-                    <div class="info-box-icon" style="background: #17a2b8;">📝</div>
-                    <div class="info-box-content">
-                        <span class="info-box-text">Group Soal</span>
-                        <span class="info-box-number" id="count-soal">0</span>
-                    </div>
-                </div>
-                <div class="info-box">
-                    <div class="info-box-icon" style="background: #ffc107;">👨‍🏫</div>
-                    <div class="info-box-content">
-                        <span class="info-box-text">Guru</span>
-                        <span class="info-box-number">2</span>
-                    </div>
-                </div>
-                <div class="info-box">
-                    <div class="info-box-icon" style="background: #fd7e14;">👤</div>
-                    <div class="info-box-content">
-                        <span class="info-box-text">Siswa</span>
-                        <span class="info-box-number">5</span>
-                    </div>
-                </div>
-                <div class="info-box">
-                    <div class="info-box-icon" style="background: #28a745;">✅</div>
-                    <div class="info-box-content">
-                        <span class="info-box-text">Ujian Aktif</span>
-                        <span class="info-box-number">1</span>
-                    </div>
-                </div>
-            </div>
-            <button onclick="handleBackup()" style="padding: 10px; cursor: pointer;">☁️ Backup Nilai ke Sheets</button>
-        </div>
-
-        <div id="monitoring" class="tab-content">
-            <h3>Rekap Nilai Siswa</h3>
-            <table>
-                <thead><tr><th>Nama</th><th>Kelas</th><th>Nilai</th></tr></thead>
-                <tbody id="tabel-rekap"></tbody>
-            </table>
-        </div>
-
-        <div id="input-soal" class="tab-content">
-            <h3>Input Soal Baru</h3>
-            <select id="s-tingkat"><option>X BP</option><option>XI BP</option><option>XII BP</option></select>
-            <input type="text" id="s-jurusan" value="Broadcasting">
-            <textarea id="s-pertanyaan" placeholder="Pertanyaan..."></textarea>
-            <input type="text" id="opt-1" placeholder="Pilihan A"><input type="text" id="opt-2" placeholder="Pilihan B">
-            <input type="text" id="opt-3" placeholder="Pilihan C"><input type="text" id="opt-4" placeholder="Pilihan D">
-            <input type="text" id="s-kunci" placeholder="Kunci Jawaban">
-            <button class="btn-blue" onclick="simpanSoal()">SIMPAN SOAL</button>
-        </div>
+        <input id="q-kunci" placeholder="Kunci Jawaban">
+        <button class="btn btn-blue" onclick="simpanSoal()">Simpan Soal Baru</button>
     </div>
 
-    <script>
-        const BASE_URL = "https://script.google.com/macros/s/AKfycbyjirhdtJ2xapDsVSAtGioeuVJ0t5azSXSE83QjE4y7QpliSbY_Z3trUC5zGkXWxUuw/exec";
+    <div id="p-nilai" class="panel">
+        <h2>Rekap Nilai Siswa</h2>
+        <table>
+            <thead><tr><th>Waktu</th><th>Nama</th><th>Nilai</th></tr></thead>
+            <tbody id="t-nilai"></tbody>
+        </table>
+    </div>
 
-        async function muatRekap() {
-            const resp = await fetch(`${BASE_URL}?action=getRekapNilai`);
-            const data = await resp.json();
-            document.getElementById('tabel-rekap').innerHTML = data.map(r => `<tr><td>${r.nama}</td><td>${r.kelas}</td><td><strong>${r.nilai}</strong></td></tr>`).join('');
-            document.getElementById('count-soal').innerText = data.length; // Contoh statis
-        }
+    <div id="p-siswa" class="panel">
+        <h2>Database Siswa</h2>
+        <table>
+            <thead><tr><th>NIS</th><th>Nama</th><th>Kelas</th><th>Izin</th></tr></thead>
+            <tbody id="t-siswa"></tbody>
+        </table>
+    </div>
 
-        async function simpanSoal() {
-            const data = {
-                action: "inputSoal",
-                tingkat: document.getElementById('s-tingkat').value,
-                jurusan: document.getElementById('s-jurusan').value,
-                pertanyaan: document.getElementById('s-pertanyaan').value,
-                opsi: [document.getElementById('opt-1').value, document.getElementById('opt-2').value, document.getElementById('opt-3').value, document.getElementById('opt-4').value],
-                kunci: document.getElementById('s-kunci').value
-            };
-            await fetch(BASE_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
-            alert("Soal Berhasil Disimpan!");
-            switchTab('dashboard', document.querySelector('.nav-item'));
-        }
+    <div id="p-absen" class="panel">
+        <h2>Log Absensi Selfie Guru</h2>
+        <table border="1">
+            <thead><tr><th>Nama Guru</th><th>Waktu</th><th>Lokasi</th></tr></thead>
+            <tbody id="t-absen"></tbody>
+        </table>
+    </div>
+</div>
 
-        async function handleBackup() {
-            const resp = await fetch(`${BASE_URL}?action=backupNilai`);
-            const res = await resp.json(); alert(res.pesan);
-        }
+<script>
+    const BASE_URL = "https://script.google.com/macros/s/AKfycbzvDuweZfLhWtbeu6urTPOuzWvLDJdZ2xMfYFlSRc7os0nYZNFna01mUmtwnOmXTwuD/exec";
 
-        function switchTab(tabId, el) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            el.classList.add('active');
-            if(tabId === 'monitoring') muatRekap();
-        }
+    function showPanel(id, el) {
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        el.classList.add('active');
+        if(id === 'p-nilai') muatData('getRekapNilai', 't-nilai');
+        if(id === 'p-siswa') muatData('getDataSiswa', 't-siswa');
+        if(id === 'p-absen') muatData('getAbsensi', 't-absen');
+    }
 
-        window.onload = muatRekap;
-    </script>
+    async function muatData(act, target) {
+        const r = await fetch(`${BASE_URL}?action=${act}`);
+        const d = await r.json();
+        document.getElementById(target).innerHTML = d.map(v => `<tr>${v.map(c => `<td>${c}</td>`).join('')}</tr>`).join('');
+    }
+
+    async function simpanSoal() {
+        const data = {
+            action: "inputSoal", tingkat: "X BP", jurusan: "Broadcasting",
+            tipe: document.getElementById('tipe-soal').value,
+            pertanyaan: document.getElementById('q-text').value,
+            opsi: [document.getElementById('o1').value, document.getElementById('o2').value, document.getElementById('o3').value, document.getElementById('o4').value],
+            kunci: document.getElementById('q-kunci').value
+        };
+        await fetch(BASE_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
+        alert("Soal Berhasil Disimpan!"); location.reload();
+    }
+
+    function toggleOpsi() {
+        const tipe = document.getElementById('tipe-soal').value;
+        const cont = document.getElementById('opsi-container');
+        cont.style.display = (tipe === "IS" || tipe === "ES") ? "none" : "block";
+    }
+
+    async function handleBackup() {
+        const r = await fetch(`${BASE_URL}?action=backupNilai`);
+        const res = await r.json(); alert(res.pesan);
+    }
+</script>
 </body>
 </html>
