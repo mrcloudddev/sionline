@@ -71,29 +71,26 @@
 
         // Fungsi mengecek apakah ada perubahan soal dari Admin
         async function cekPerubahanSoal() {
-            // Radar hanya jalan kalau BASE_URL sudah terdefinisi di script.js
-            if (typeof BASE_URL === 'undefined') return;
+    if (typeof BASE_URL === 'undefined') return;
 
-            try {
-                const resp = await fetch(BASE_URL + "?action=checkUpdate");
-                const data = await resp.json();
-                
-                // Simpan versi saat pertama kali halaman dimuat atau login
-                if (lastVersion === 0) {
-                    lastVersion = data.lastUpdate;
-                    radarStarted = true;
-                    console.log("Radar Aktif. Versi saat ini: " + lastVersion);
-                    return;
-                }
-
-                // Jika versi di database (B1 System_Config) lebih besar dari versi lokal HP siswa
-                if (data.lastUpdate > lastVersion) {
-                    tampilkanLoadingUpdate();
-                }
-            } catch (e) { 
-                console.log("Radar: Gagal terhubung ke server."); 
-            }
+    try {
+        // TAMBAHKAN &t= + new Date().getTime() agar Google tidak kasih data basi (cache)
+        const resp = await fetch(BASE_URL + "?action=checkUpdate&t=" + new Date().getTime());
+        const data = await resp.json();
+        
+        if (lastVersion === 0) {
+            lastVersion = data.lastUpdate;
+            return;
         }
+
+        if (data.lastUpdate > lastVersion) {
+            console.log("Perubahan terdeteksi! Versi Baru: " + data.lastUpdate);
+            tampilkanLoadingUpdate();
+        }
+    } catch (e) { 
+        console.log("Radar: Gagal cek update."); 
+    }
+}
 
         function tampilkanLoadingUpdate() {
             // Mencegah overlay muncul berkali-kali
