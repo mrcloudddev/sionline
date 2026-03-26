@@ -10,33 +10,31 @@
         body { display: flex; background: var(--bg); }
 
         /* SIDEBAR */
-        #sidebar { width: 260px; height: 100vh; background: var(--sidebar); color: white; position: fixed; z-index: 100; }
-        .side-header { padding: 20px; font-weight: bold; border-bottom: 1px solid #4b545c; text-align: center; font-size: 1.2rem; }
-        .nav-item { padding: 15px 25px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 10px; color: #c2c7d0; }
-        .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.1); border-left: 5px solid var(--blue); color: white; }
+        #sidebar { width: 260px; height: 100vh; background: var(--sidebar); color: white; position: fixed; }
+        .side-header { padding: 20px; font-weight: bold; border-bottom: 1px solid #4b545c; text-align: center; }
+        .nav-item { padding: 15px 25px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 10px; }
+        .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.1); border-left: 5px solid var(--blue); }
 
         /* CONTENT */
-        #main { flex: 1; margin-left: 260px; padding: 30px; min-height: 100vh; }
+        #main { flex: 1; margin-left: 260px; padding: 30px; }
         .panel { background: white; padding: 25px; border-radius: 8px; display: none; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .panel.active { display: block; }
-        
-        /* SUB-MENU KELOLA SOAL */
+
+        /* SUB-NAV KELOLA SOAL */
         .sub-nav { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 15px; }
         .btn-sub { padding: 8px 15px; border-radius: 5px; border: 1px solid #ddd; cursor: pointer; background: white; font-weight: 600; }
         .btn-sub.active { background: var(--blue); color: white; border-color: var(--blue); }
 
-        /* TABLES */
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; }
-        th, td { border: 1px solid #eee; padding: 12px; text-align: left; font-size: 14px; }
-        th { background: #f8f9fa; color: #333; }
-        
-        /* FORMS */
+        /* TABLES & FORMS */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #eee; padding: 10px; text-align: left; font-size: 13px; }
+        th { background: #f8f9fa; }
         input, select, textarea { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; }
-        .btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; transition: 0.2s; }
+        .btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; }
         .btn-blue { background: var(--blue); } .btn-red { background: var(--red); } .btn-green { background: var(--green); } .btn-orange { background: var(--orange); }
         .btn-sm { padding: 5px 10px; font-size: 12px; }
         .hidden { display: none; }
-        .badge { padding: 4px 8px; border-radius: 4px; color: white; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+        .badge { padding: 4px 8px; border-radius: 4px; color: white; font-size: 11px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -54,7 +52,7 @@
     <div id="p-dash" class="panel active">
         <h2>Kontrol Jadwal Ujian</h2>
         <table id="t-jadwal-table">
-            <thead><tr><th>Mata Pelajaran</th><th>Kelas</th><th>Status</th><th>Aksi</th></tr></thead>
+            <thead><tr><th>Mata Pelajaran</th><th>Rombel</th><th>Status</th><th>Aksi</th></tr></thead>
             <tbody id="t-jadwal"></tbody>
         </table>
         <br>
@@ -70,51 +68,69 @@
         <div id="sub-soal-input">
             <h3 id="form-title">Tambah Soal Baru</h3>
             <input type="hidden" id="edit-id">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <select id="i-tingkat"><option>X BP</option><option>XI BP</option><option>XII BP</option></select>
-                <select id="i-tipe" onchange="toggleOpsi()"><option value="PG">Pilihan Ganda</option><option value="PGK">PG Kompleks</option><option value="IS">Isian Singkat</option><option value="MJD">Menjodohkan</option><option value="ES">Esai</option></select>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                <div><label>Tingkatan:</label>
+                    <select id="i-tingkat"><option>X</option><option>XI</option><option>XII</option></select>
+                </div>
+                <div><label>Jurusan:</label>
+                    <select id="i-jurusan"><option value="Umum">Umum</option><option value="Broadcasting">Broadcasting</option><option value="Teknik Sepeda Motor">TSM</option></select>
+                </div>
+                <div><label>Tipe Soal:</label>
+                    <select id="i-tipe" onchange="toggleOpsi()"><option value="PG">Pilihan Ganda</option><option value="PGK">PG Kompleks</option><option value="IS">Isian Singkat</option><option value="MJD">Menjodohkan</option><option value="ES">Esai</option></select>
+                </div>
             </div>
+
+            <label>Rombel Spesifik (Contoh: X BP, XI TSM 1, atau kosongkan jika Umum):</label>
+            <input type="text" id="i-rombel" placeholder="Tulis kelas spesifik...">
+
+            <label>Pertanyaan:</label>
             <textarea id="q-text" rows="4" placeholder="Ketik Pertanyaan..."></textarea>
+
             <div id="opsi-container">
-                <input id="o1" placeholder="Opsi 1 / Pasangan A"><input id="o2" placeholder="Opsi 2 / Pasangan B">
-                <input id="o3" placeholder="Opsi 3 / Pasangan C"><input id="o4" placeholder="Opsi 4 / Pasangan D">
+                <label>Opsi 1 - 4 / Pasangan A - D:</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <input id="o1" placeholder="Opsi A"><input id="o2" placeholder="Opsi B">
+                    <input id="o3" placeholder="Opsi C"><input id="o4" placeholder="Opsi D">
+                </div>
             </div>
+
+            <label>Kunci Jawaban:</label>
             <input id="q-kunci" placeholder="Kunci Jawaban">
+
+            <label>Status:</label>
             <select id="i-status"><option value="aktif">Aktif</option><option value="nonaktif">Nonaktif</option></select>
-            <button class="btn btn-blue" style="width:100%; padding:15px; margin-top:10px" id="btn-save-soal" onclick="simpanSoal()">Simpan Soal Baru</button>
+
+            <button class="btn btn-blue" style="width:100%; padding:15px; margin-top:10px" id="btn-save-soal" onclick="simpanSoal()">Simpan Soal</button>
             <button class="btn btn-red hidden" style="width:100%; margin-top:10px" id="btn-cancel-edit" onclick="resetFormSoal()">Batal Edit</button>
         </div>
 
         <div id="sub-soal-daftar" class="hidden">
             <h3>Database Soal</h3>
             <table>
-                <thead><tr><th>ID</th><th>Tipe</th><th>Pertanyaan</th><th>Status</th><th>Aksi</th></tr></thead>
+                <thead><tr><th>ID</th><th>Tingkat/Rombel</th><th>Tipe</th><th>Soal</th><th>Aksi</th></tr></thead>
                 <tbody id="t-database-soal"></tbody>
             </table>
         </div>
     </div>
 
-    <div id="p-nilai" class="panel"><h2>Rekap Nilai Siswa</h2><table id="t-nilai"></table></div>
-    <div id="p-siswa" class="panel"><h2>Database Siswa</h2><table id="t-siswa"></table></div>
+    <div id="p-nilai" class="panel"><h2>Rekap Nilai</h2><table id="t-nilai"></table></div>
+    <div id="p-siswa" class="panel"><h2>Data Siswa</h2><table id="t-siswa"></table></div>
     <div id="p-absen" class="panel"><h2>Absensi Guru</h2><table id="t-absen"></table></div>
 </div>
 
 <script>
-    const BASE_URL = "https://script.google.com/macros/s/AKfycbxgY63J1rnwsleukqXLF4TddL3NESChE2QP9mgaoiSpFrVpXEmRGT0Bwj_AR3rGtrFW/exec";
+    // GANTI LINK DI BAWAH INI DENGAN LINK DEPLOY APPS SCRIPT BAPAK
+    const BASE_URL = "https://script.google.com/macros/s/AKfycbyjirhdtJ2xapDsVSAtGioeuVJ0t5azSXSE83QjE4y7QpliSbY_Z3trUC5zGkXWxUuw/exec";
 
     function showPanel(id, el) {
         document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         document.getElementById(id).classList.add('active');
         el.classList.add('active');
-        
         if(id === 'p-dash') muatJadwal();
-        if(id === 'p-nilai') muatTabel('getRekapNilai', 't-nilai');
-        if(id === 'p-siswa') muatTabel('getDataSiswa', 't-siswa');
-        if(id === 'p-absen') muatTabel('getAbsensi', 't-absen');
     }
 
-    // --- LOGIKA KELOLA SOAL ---
     function switchSubSoal(mode) {
         document.getElementById('sub-soal-input').classList.toggle('hidden', mode !== 'input');
         document.getElementById('sub-soal-daftar').classList.toggle('hidden', mode !== 'daftar');
@@ -123,13 +139,34 @@
         if(mode === 'daftar') muatDatabaseSoal();
     }
 
+    // LOGIKA SIMPAN (INPUT & UPDATE)
+    async function simpanSoal() {
+        const id = document.getElementById('edit-id').value;
+        const rombel = document.getElementById('i-rombel').value;
+        const tingkat = document.getElementById('i-tingkat').value;
+
+        const data = {
+            action: id ? "updateSoal" : "inputSoal",
+            id: id,
+            tingkat: rombel ? rombel : tingkat, // Mengisi kolom B
+            jurusan: document.getElementById('i-jurusan').value, // Mengisi kolom C
+            tipe: document.getElementById('i-tipe').value,
+            pertanyaan: document.getElementById('q-text').value,
+            opsi: [document.getElementById('o1').value, document.getElementById('o2').value, document.getElementById('o3').value, document.getElementById('o4').value],
+            kunci: document.getElementById('q-kunci').value,
+            status: document.getElementById('i-status').value
+        };
+
+        const resp = await fetch(BASE_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
+        alert("Berhasil!"); location.reload();
+    }
+
     async function muatDatabaseSoal() {
         const r = await fetch(`${BASE_URL}?action=getDatabaseSoal`);
         const d = await r.json();
         document.getElementById('t-database-soal').innerHTML = d.map(v => `
             <tr>
-                <td>${v[0]}</td><td>${v[3]}</td><td>${v[4].substring(0,40)}...</td>
-                <td><span class="badge ${v[7]==='aktif'?'btn-green':'btn-red'}">${v[7]}</span></td>
+                <td>${v[0]}</td><td>${v[1]}</td><td>${v[3]}</td><td>${v[4].substring(0,30)}...</td>
                 <td>
                     <button class="btn btn-sm btn-orange" onclick='isiFormEdit(${JSON.stringify(v)})'>Edit</button>
                     <button class="btn btn-sm btn-red" onclick="hapusSoal('${v[0]}')">Hapus</button>
@@ -142,7 +179,8 @@
         switchSubSoal('input');
         document.getElementById('form-title').innerText = "Edit Soal " + v[0];
         document.getElementById('edit-id').value = v[0];
-        document.getElementById('i-tingkat').value = v[1];
+        document.getElementById('i-rombel').value = v[1];
+        document.getElementById('i-jurusan').value = v[2];
         document.getElementById('i-tipe').value = v[3];
         document.getElementById('q-text').value = v[4];
         const opsi = JSON.parse(v[5]);
@@ -155,38 +193,12 @@
         toggleOpsi();
     }
 
-    function resetFormSoal() {
-        document.getElementById('form-title').innerText = "Tambah Soal Baru";
-        document.getElementById('edit-id').value = "";
-        document.getElementById('q-text').value = ""; document.getElementById('q-kunci').value = "";
-        document.getElementById('btn-save-soal').innerText = "Simpan Soal Baru";
-        document.getElementById('btn-cancel-edit').classList.add('hidden');
-    }
-
-    async function simpanSoal() {
-        const id = document.getElementById('edit-id').value;
-        const data = {
-            action: id ? "updateSoal" : "inputSoal",
-            id: id,
-            tingkat: document.getElementById('i-tingkat').value,
-            jurusan: "Umum",
-            tipe: document.getElementById('i-tipe').value,
-            pertanyaan: document.getElementById('q-text').value,
-            opsi: [document.getElementById('o1').value, document.getElementById('o2').value, document.getElementById('o3').value, document.getElementById('o4').value],
-            kunci: document.getElementById('q-kunci').value,
-            status: document.getElementById('i-status').value
-        };
-        await fetch(BASE_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
-        alert("Berhasil!"); location.reload();
-    }
-
     async function hapusSoal(id) {
         if(!confirm("Hapus soal " + id + "?")) return;
         await fetch(BASE_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "hapusSoal", id: id }) });
         alert("Terhapus!"); muatDatabaseSoal();
     }
 
-    // --- LOGIKA LAINNYA ---
     async function muatJadwal() {
         const r = await fetch(`${BASE_URL}?action=getPengaturan`);
         const d = await r.json();
@@ -215,7 +227,7 @@
 
     async function handleBackup() {
         await fetch(BASE_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "backupNilai" }) });
-        alert("Backup Sukses!");
+        alert("Backup Berhasil!");
     }
 
     window.onload = muatJadwal;
