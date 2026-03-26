@@ -8,7 +8,9 @@ async function prosesLogin() {
     const user = document.getElementById('username').value;
     if(!user) return alert("Masukkan NIS!");
     
-    document.getElementById('btn-login').innerText = "Mengecek...";
+    // Mengubah teks tombol agar siswa tahu proses sedang berjalan
+    const btn = document.getElementById('btn-login');
+    if(btn) btn.innerText = "Mengecek...";
     
     try {
         const resp = await fetch(`${BASE_URL}?action=login&user=${encodeURIComponent(user)}`);
@@ -60,7 +62,7 @@ async function cekStatusDanLoadSoal(kelas, jurusan) {
 function renderSoal(soal) {
     const cont = document.getElementById('question-container');
     cont.innerHTML = soal.map((s, i) => {
-        // Logika Gambar Soal
+        // Logika Render Gambar Soal [IMG]url[/IMG]
         let qText = s.pertanyaan.replace(/\[IMG\](.*?)\[\/IMG\]/g, '<img src="$1" class="img-soal">');
         
         return `
