@@ -54,35 +54,37 @@
     <script src="script.js"></script>
 
     <script>
-        // Gunakan var agar scope benar-benar global
+        // Pakai var agar global
         var lastVersion = 0;
 
         async function cekPerubahanSoal() {
-            // Cek apakah script.js sudah mendefinisikan BASE_URL
-            if (typeof BASE_URL === 'undefined' || !BASE_URL) {
-                console.log("Menunggu BASE_URL...");
-                return;
-            }
+            // Pastikan BASE_URL sudah siap dari script.js
+            if (typeof BASE_URL === 'undefined' || !BASE_URL) return;
 
             try {
-                // Gunakan anti-cache t= agar data selalu fresh
+                // Tambahkan parameter anti-cache t= agar data selalu segar dari server
                 const resp = await fetch(BASE_URL + "?action=checkUpdate&t=" + new Date().getTime());
                 const data = await resp.json();
                 
-                // Logging untuk memantau di Console (seperti screenshot Bapak)
-                console.log("Radar: Server=" + data.lastUpdate + " | Lokal=" + lastVersion);
+                // Jika server mengirim null, kita anggap versi 1 agar tidak error
+                let serverVersion = data.lastUpdate || 1;
 
+                // Pantau di Console
+                console.log("Radar: Server=" + serverVersion + " | Lokal=" + lastVersion);
+
+                // Set versi awal saat pertama kali radar jalan
                 if (lastVersion === 0) {
-                    lastVersion = data.lastUpdate;
+                    lastVersion = serverVersion;
                     return;
                 }
 
-                if (data.lastUpdate > lastVersion) {
-                    console.log("Update Terdeteksi!");
+                // Jika ada selisih waktu (angka server lebih besar), tandanya ada perubahan
+                if (serverVersion > lastVersion) {
+                    console.log("!!! PERUBAHAN TERDETEKSI !!!");
                     tampilkanLoadingUpdate();
                 }
             } catch (e) { 
-                console.log("Radar: Koneksi sibuk/terputus."); 
+                console.log("Radar: Gagal terhubung ke server."); 
             }
         }
 
@@ -94,19 +96,20 @@
             overlay.innerHTML = `
                 <div class="loader"></div>
                 <h2 style="margin-top:20px;">PEMBARUAN DATA...</h2>
-                <p style="padding: 0 20px; opacity: 0.8;">Guru baru saja memperbarui soal atau jadwal.<br>Halaman akan dimuat ulang otomatis.</p>
+                <p style="padding: 0 20px; opacity: 0.8;">Admin baru saja memperbarui soal atau jadwal.<br>Halaman akan dimuat ulang otomatis.</p>
             `;
             document.body.appendChild(overlay);
             
+            // Beri jeda sebentar sebelum reload agar siswa sempat baca pesan
             setTimeout(() => {
                 location.reload();
             }, 2500);
         }
 
-        // Jalankan radar sedikit terlambat agar script.js siap duluan
+        // Radar aktif 3 detik setelah halaman terbuka
         setTimeout(() => {
             cekPerubahanSoal();
-            // Interval cek setiap 30 detik
+            // Cek setiap 30 detik
             setInterval(cekPerubahanSoal, 30000);
         }, 3000);
     </script>
