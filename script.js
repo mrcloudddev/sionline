@@ -1,4 +1,4 @@
-const BASE_URL = "https://script.google.com/macros/s/AKfycbzGjjVv71yQ1ecrYswMajIt4YNu-wawYS121exTdRiKwhPpmdzY4Y1YRuwy9qYcKVIh/exec";
+const BASE_URL = "https://script.google.com/macros/s/AKfycbyjirhdtJ2xapDsVSAtGioeuVJ0t5azSXSE83QjE4y7QpliSbY_Z3trUC5zGkXWxUuw/exec";
 
 let timerInterval, dataSiswaAktif = {}, ujianDimulai = false;
 
@@ -35,11 +35,21 @@ async function cekStatusDanLoadSoal(kelas, jurusan) {
 
 function renderSoal(soal) {
     const cont = document.getElementById('question-container');
-    cont.innerHTML = soal.map((s, i) => `
+    cont.innerHTML = soal.map((s, i) => {
+        // Deteksi Gambar di Pertanyaan (Format: [IMG]url[/IMG])
+        let teksPertanyaan = s.pertanyaan.replace(/\[IMG\](.*?)\[\/IMG\]/g, '<br><img src="$1" class="img-soal">');
+
+        return `
         <div class="soal-item" data-id="${s.id}" data-tipe="${s.tipe}">
-            <p>${i+1}. ${s.pertanyaan}</p>
-            ${s.opsi.map(o => `<label class="option-label"><input type="radio" name="q${s.id}" value="${o}"> <span>${o}</span></label>`).join('')}
-        </div>`).join('');
+            <p>${i+1}. ${teksPertanyaan}</p>
+            ${s.opsi.map(o => {
+                // Deteksi jika Opsi adalah URL Gambar
+                let isImage = (o.toLowerCase().match(/\.(jpeg|jpg|gif|png|webp)$/) != null || o.startsWith("http"));
+                let isiOpsi = isImage ? `<img src="${o}" class="img-opsi">` : `<span>${o}</span>`;
+                return `<label class="option-label"><input type="radio" name="q${s.id}" value="${o}"> ${isiOpsi}</label>`;
+            }).join('')}
+        </div>`;
+    }).join('');
 }
 
 function mulaiTimer(m) {
@@ -53,7 +63,7 @@ function mulaiTimer(m) {
 
 async function submitJawaban(auto = false) {
     if(!auto && !confirm("Kirim jawaban sekarang?")) return;
-    ujianDimulai = false; // Matikan keamanan agar tidak muncul alert
+    ujianDimulai = false;
     clearInterval(timerInterval);
     const btn = document.querySelector('.btn-submit');
     btn.innerText = "Mengirim..."; btn.disabled = true;
@@ -71,5 +81,4 @@ async function submitJawaban(auto = false) {
 
 function aktifkanKeamanan() {
     document.addEventListener('contextmenu', e => e.preventDefault());
-    // Fitur alert pindah tab dihapus agar tidak error saat kirim
 }
