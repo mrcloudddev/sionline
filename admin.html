@@ -1,19 +1,139 @@
-function gantiTipeSoal() {
-    const tipe = document.getElementById('select-tipe').value;
-    const container = document.getElementById('opsi-container');
-    container.innerHTML = ""; // Reset
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Admin & Absensi SMK</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .admin-nav { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-btn { padding: 10px 20px; cursor: pointer; background: #ddd; border: none; border-radius: 5px; }
+        .tab-btn.active { background: #1a237e; color: white; }
+        .hidden { display: none; }
+        video { width: 100%; max-width: 300px; border-radius: 10px; border: 2px solid #1a237e; }
+        canvas { display: none; }
+        .alert-geo { color: red; font-weight: bold; margin-top: 10px; }
+    </style>
+</head>
+<body style="padding: 20px;">
 
-    if (tipe === "PG") {
-        container.innerHTML = `
-            <input type="text" placeholder="Opsi A">
-            <input type="text" placeholder="Opsi B">
-            <input type="text" placeholder="Kunci Jawaban (A/B/..)">
-        `;
-    } else if (tipe === "Matching") {
-        container.innerHTML = `
-            <p>Masukkan pasangan (Format: Kiri=Kanan, pisah koma)</p>
-            <textarea id="matching-pair"></textarea>
-        `;
-    }
-    // Lanjutkan untuk tipe lainnya...
-}
+    <h1>DASHBOARD SMK</h1>
+    <div class="admin-nav">
+        <button class="tab-btn active" onclick="switchTab('monitoring')">Monitoring Ujian</button>
+        <button class="tab-btn" onclick="switchTab('absensi')">Absensi Guru (Selfie)</button>
+    </div>
+
+    <div id="monitoring" class="tab-content">
+        <button onclick="handleBackup()" style="background: green; color: white; padding: 10px;">Cloud Backup Nilai</button>
+        <button onclick="muatRekap()" style="padding: 10px;">Refresh Data</button>
+        <table border="1" style="width: 100%; margin-top: 15px; border-collapse: collapse;">
+            <thead><tr style="background:#1a237e; color:white;"><th>Nama</th><th>Kelas</th><th>Nilai</th></tr></thead>
+            <tbody id="tabel-rekap"></tbody>
+        </table>
+    </div>
+
+    <div id="absensi" class="tab-content hidden">
+        <h3>Absensi Kehadiran Guru</h3>
+        <input type="text" id="nama-guru" placeholder="Nama Lengkap Guru" style="width:100%; padding:10px; margin-bottom:10px;">
+        
+        <div id="camera-area">
+            <video id="video" autoplay></video>
+            <button onclick="takeSnapshot()" id="btn-foto">Ambil Foto Selfie</button>
+            <canvas id="canvas"></canvas>
+        </div>
+
+        <div id="geo-status" class="alert-geo">Mengecek Lokasi...</div>
+        <button id="btn-absen" onclick="kirimAbsen()" disabled style="padding:15px; width:100%; background:gray; color:white;">Kirim Absen (Hanya di SMK)</button>
+    </div>
+
+    <script>
+        const BASE_URL = "URL_APPS_SCRIPT_BAPAK_DI_SINI";
+        
+        // --- KONFIGURASI GEOFENCING (UBAH SESUAI KOORDINAT SMK BAPAK) ---
+        const TARGET_LAT = -6.123456; // Contoh Lat SMK
+        const TARGET_LNG = 106.123456; // Contoh Lng SMK
+        const RADIUS_METER = 100; // Toleransi Jarak
+
+        let fotoBase64 = "";
+        let lokasiSiswa = "";
+
+        // Fungsi Geofencing
+        function checkLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(pos => {
+                    const dist = getDistance(pos.coords.latitude, pos.coords.longitude, TARGET_LAT, TARGET_LNG);
+                    lokasiSiswa = `${pos.coords.latitude},${pos.coords.longitude}`;
+                    if (dist <= RADIUS_METER) {
+                        document.getElementById('geo-status').innerText = "✅ Lokasi Terverifikasi (Di Lingkungan SMK)";
+                        document.getElementById('geo-status').style.color = "green";
+                        document.getElementById('btn-absen').disabled = false;
+                        document.getElementById('btn-absen').style.background = "#1a237e";
+                    } else {
+                        document.getElementById('geo-status').innerText = `❌ Anda di luar jangkauan SMK (${Math.round(dist)}m)`;
+                    }
+                });
+            }
+        }
+
+        function getDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371e3; // metres
+            const φ1 = lat1 * Math.PI/180;
+            const φ2 = lat2 * Math.PI/180;
+            const Δφ = (lat2-lat1) * Math.PI/180;
+            const Δλ = (lon2-lon1) * Math.PI/180;
+            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+
+        // Fungsi Kamera
+        async function startCamera() {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            document.getElementById('video').srcObject = stream;
+        }
+
+        function takeSnapshot() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            fotoBase64 = canvas.toDataURL('image/jpeg');
+            alert("Foto Berhasil Diambil!");
+        }
+
+        async function kirimAbsen() {
+            const nama = document.getElementById('nama-guru').value;
+            if(!nama || !fotoBase64) return alert("Nama dan Foto Wajib!");
+            
+            await fetch(BASE_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify({ action: "absenGuru", namaGuru: nama, foto: fotoBase64, lokasi: lokasiSiswa, status: "Hadir" })
+            });
+            alert("Absensi Berhasil!");
+            location.reload();
+        }
+
+        // Monitoring
+        async function muatRekap() {
+            const r = await fetch(`${BASE_URL}?action=getRekapNilai`);
+            const d = await r.json();
+            document.getElementById('tabel-rekap').innerHTML = d.map(v => `<tr><td>${v.nama}</td><td>${v.kelas}</td><td>${v.nilai}</td></tr>`).join('');
+        }
+
+        async function handleBackup() {
+            const r = await fetch(`${BASE_URL}?action=backupNilai`);
+            const res = await r.json();
+            alert(res.pesan);
+        }
+
+        function switchTab(t) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+            document.getElementById(t).classList.remove('hidden');
+            if(t === 'absensi') { startCamera(); checkLocation(); }
+        }
+
+        window.onload = muatRekap;
+    </script>
+</body>
+</html>
