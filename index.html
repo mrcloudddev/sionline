@@ -2,51 +2,98 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CBT SMK - Ujian Online</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    
+    <style>
+        /* Paste kode CSS Lengkap yang saya berikan sebelumnya di sini */
+        :root {
+            --primary-color: #1a237e;
+            --secondary-color: #f5f5f5;
+            --accent-color: #d32f2f;
+            --text-color: #333;
+            --white: #ffffff;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #e0e0e0; color: var(--text-color); line-height: 1.6; }
+
+        /* --- SEKSI LOGIN --- */
+        #login-section {
+            max-width: 400px; margin: 100px auto; background: var(--white);
+            padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); text-align: center;
+        }
+        #login-section h2 { margin-bottom: 20px; color: var(--primary-color); }
+        #login-section input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; }
+        #btn-login { width: 100%; padding: 12px; background: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+
+        /* --- HEADER UJIAN --- */
+        header {
+            background: var(--primary-color); color: white; padding: 15px 20px;
+            position: sticky; top: 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center;
+        }
+        .nama { font-weight: bold; font-size: 16px; display: block; }
+        .kelas-jurus { font-size: 13px; opacity: 0.9; }
+        #timer { font-size: 20px; font-weight: bold; background: rgba(255,255,255,0.2); padding: 5px 15px; border-radius: 20px; color: #ffeb3b; }
+
+        /* --- SEKSI UJIAN --- */
+        #exam-section { max-width: 800px; margin: 20px auto; padding: 10px; display: none; }
+        .soal-item { background: var(--white); margin-bottom: 20px; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .soal-text { font-size: 17px; font-weight: 500; margin-bottom: 15px; }
+
+        /* --- STYLE GAMBAR --- */
+        .img-soal { max-width: 100%; height: auto; margin: 15px 0; border-radius: 8px; border: 1px solid #ddd; display: block; }
+        .img-opsi { max-width: 150px; height: auto; margin: 5px; border-radius: 4px; border: 1px solid #eee; }
+
+        /* --- OPSI JAWABAN --- */
+        .option-label {
+            display: flex; align-items: center; background: #f9f9f9; padding: 12px 15px;
+            margin-bottom: 10px; border-radius: 8px; cursor: pointer; border: 2px solid transparent; transition: 0.2s;
+        }
+        .option-label:hover { background: #f0f0f0; }
+        .option-label input { width: 20px; height: 20px; margin-right: 15px; }
+        .option-label:has(input:checked) { border-color: var(--primary-color); background: #e8eaf6; }
+
+        /* --- FOOTER --- */
+        .footer-action { text-align: center; margin: 40px 0; }
+        .btn-submit {
+            background: var(--accent-color); color: white; padding: 15px 40px;
+            border: none; border-radius: 30px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s;
+        }
+        .btn-submit:disabled { background: #999; cursor: not-allowed; }
+
+        @media (max-width: 600px) {
+            header { flex-direction: column; text-align: center; gap: 10px; }
+            .img-opsi { max-width: 100px; }
+        }
+    </style>
 </head>
 <body>
 
-    <div class="main-container">
-        <div id="login-section" class="auth-card">
-            <div class="auth-header">
-                <img src="https://img.icons8.com/fluency/96/school.png" alt="logo">
-                <h2>CBT SMK</h2>
-                <p>Silakan login menggunakan NIS Anda.</p>
-            </div>
-            <div class="auth-body">
-                <div class="input-group">
-                    <label>NIS / Username</label>
-                    <input type="number" id="username" placeholder="Masukkan NIS..." pattern="\d*">
-                </div>
-                <button onclick="prosesLogin()" class="btn-primary" id="btn-login">Mulai Ujian</button>
-            </div>
-        </div>
+    <div id="login-section">
+        <h2>LOGIN UJIAN</h2>
+        <input type="text" id="username" placeholder="Masukkan NIS Anda..." autocomplete="off">
+        <button id="btn-login" onclick="prosesLogin()">Mulai Ujian</button>
+    </div>
 
-        <div id="exam-section" style="display:none;">
-            <div class="exam-header-fixed">
-                <div class="header-content">
-                    <div id="info-siswa">
-                        <span class="nama">Memuat...</span>
-                        <span class="kelas-jurus">Loading...</span>
-                    </div>
-                    <div class="timer-wrapper">
-                        <span id="timer">00:00:00</span>
-                    </div>
-                </div>
+    <div id="exam-section">
+        <header>
+            <div class="info-siswa">
+                <span class="nama">Nama Siswa</span>
+                <span class="kelas-jurus">Kelas | Jurusan</span>
+            </div>
+            <div id="timer">00:00:00</div>
+        </header>
+
+        <div id="question-container">
             </div>
 
-            <div id="question-container" class="exam-body">
-                </div>
-
-            <div class="exam-footer">
-                <button onclick="submitJawaban()" class="btn-submit">Akhiri & Kirim Jawaban</button>
-            </div>
+        <div class="footer-action">
+            <button class="btn-submit" onclick="submitJawaban()">Akhiri & Kirim Jawaban</button>
         </div>
     </div>
-    
+
     <script src="script.js"></script>
+
 </body>
 </html>
