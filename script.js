@@ -111,3 +111,8 @@ async function submitJawaban(auto = false) {
         btn.disabled = false; 
     }
 }
+
+window.onload = function() {
+    // Ambil versi awal saat siswa baru buka web
+    cekPerubahanSoal(); 
+};
