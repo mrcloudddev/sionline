@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CBT SMK - Ujian Online</title>
-    
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -15,7 +14,7 @@
         <button id="btn-login" onclick="prosesLogin()">Mulai Ujian</button>
     </div>
 
-    <div id="exam-section">
+    <div id="exam-section" style="display: none;">
         <header>
             <div class="info-siswa">
                 <span id="nama-siswa" class="nama">Nama Siswa</span>
@@ -24,10 +23,11 @@
             <div id="timer">00:00:00</div>
         </header>
 
-        <div id="question-container">
-            </div>
+        <div id="question-container"></div>
 
-        <button class="btn-submit" onclick="submitJawaban()">Akhiri & Kirim Jawaban</button>
+        <div style="text-align: center; margin-top: 30px;">
+            <button class="btn-submit" onclick="submitJawaban()">Akhiri & Kirim Jawaban</button>
+        </div>
     </div>
 
     <script src="script.js"></script>
