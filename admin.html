@@ -59,16 +59,24 @@
             <h3 id="form-title">Form Soal</h3>
             <input type="hidden" id="edit-id">
             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
-                <select id="i-tingkat"><option>X</option><option>XI</option><option>XII</option></select>
-                <select id="i-jurusan">
-                    <option value="Umum">Umum</option>
-                    <option value="Informatika">Informatika</option>
-                    <option value="Broadcasting">Broadcasting</option>
-                    <option value="TSM">TSM</option>
-                </select>
-                <select id="i-tipe" onchange="toggleOpsi()"><option value="PG">Pilihan Ganda</option><option value="IS">Isian Singkat</option></select>
+                <div><label>Tingkatan:</label>
+                    <select id="i-tingkat"><option>X</option><option>XI</option><option>XII</option></select>
+                </div>
+                <div><label>Mata Pelajaran / Jurusan:</label>
+                    <select id="i-jurusan">
+                        <option value="Umum">Umum</option>
+                        <option value="Informatika">Informatika</option>
+                        <option value="Dasar Dasar Program Keahlian">Dasar Dasar Program Keahlian</option>
+                        <option value="Koding dan AI">Koding dan AI</option>
+                        <option value="Broadcasting dan Perfilman">Broadcasting dan Perfilman</option>
+                        <option value="TSM">TSM</option>
+                    </select>
+                </div>
+                <div><label>Tipe Soal:</label>
+                    <select id="i-tipe" onchange="toggleOpsi()"><option value="PG">Pilihan Ganda</option><option value="IS">Isian Singkat</option></select>
+                </div>
             </div>
-            <input type="text" id="i-rombel" placeholder="Rombel (Contoh: X BP)">
+            <input type="text" id="i-rombel" placeholder="Rombel Spesifik (Contoh: X BP)">
             <textarea id="q-text" rows="4" placeholder="Pertanyaan..."></textarea>
             <div id="opsi-container">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
@@ -86,7 +94,7 @@
             <div class="bulk-action-area">
                 <strong>Filter Mapel:</strong>
                 <select id="filter-mapel-soal" onchange="filterTabelSoal()" style="width: 200px; margin: 0;"><option value="">-- Semua --</option></select>
-                <input type="text" id="cari-soal-teks" placeholder="Cari potongan soal..." onkeyup="filterTabelSoal()" style="flex: 1; margin: 0;">
+                <input type="text" id="cari-soal-teks" placeholder="Cari teks soal..." onkeyup="filterTabelSoal()" style="flex: 1; margin: 0;">
             </div>
             <table>
                 <thead><tr><th>ID</th><th>Mapel/Rombel</th><th>Tipe</th><th>Soal</th><th>Aksi</th></tr></thead>
@@ -130,7 +138,7 @@
         if(id === 'p-nilai') muatTabel('getRekapNilai', 't-nilai');
     }
 
-    // --- LOGIKA SOAL ---
+    // --- LOGIKA KELOLA SOAL ---
     function switchSubSoal(mode) {
         document.getElementById('sub-soal-input').classList.toggle('hidden', mode !== 'input');
         document.getElementById('sub-soal-daftar').classList.toggle('hidden', mode !== 'daftar');
@@ -143,17 +151,14 @@
         const r = await fetch(`${BASE_URL}?action=getDatabaseSoal`);
         const d = await r.json();
         const body = document.getElementById('t-database-soal');
-        
-        // Update Filter Mapel
         const listMapel = [...new Set(d.map(v => v[2]))].sort();
         document.getElementById('filter-mapel-soal').innerHTML = '<option value="">-- Semua --</option>' + listMapel.map(m => `<option value="${m}">${m}</option>`).join('');
-
         body.innerHTML = d.map(v => `
             <tr data-mapel="${v[2]}">
                 <td>${v[0]}</td>
                 <td><small>${v[2]}</small><br><strong>${v[1]}</strong></td>
                 <td>${v[3]}</td>
-                <td>${v[4].substring(0,50)}...</td>
+                <td>${v[4].substring(0,40)}...</td>
                 <td>
                     <button class="btn btn-sm btn-orange" onclick='isiFormEdit(${JSON.stringify(v)})'>Edit</button>
                     <button class="btn btn-sm btn-red" onclick="hapusSoal('${v[0]}')">Hapus</button>
@@ -166,7 +171,7 @@
         const cari = document.getElementById("cari-soal-teks").value.toUpperCase();
         const tr = document.getElementById("t-database-soal").getElementsByTagName("tr");
         for (let i = 0; i < tr.length; i++) {
-            const match = (mapel === "" || tr[i].getAttribute("data-mapel").toUpperCase() === mapel) && tr[i].innerText.toUpperCase().includes(cari);
+            const match = (mapel === "" || tr[i].getAttribute("data-mapel").toUpperCase().includes(mapel)) && tr[i].innerText.toUpperCase().includes(cari);
             tr[i].style.display = match ? "" : "none";
         }
     }
@@ -174,7 +179,7 @@
     async function hapusSoal(id) {
         if(!confirm("Hapus soal " + id + "?")) return;
         await fetch(BASE_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "hapusSoal", id: id }) });
-        alert("Terhapus!"); muatDatabaseSoal();
+        alert("Berhasil dihapus!"); muatDatabaseSoal();
     }
 
     async function simpanSoal() {
@@ -190,7 +195,7 @@
             status: document.getElementById('i-status').value
         };
         await fetch(BASE_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
-        alert("Berhasil!"); location.reload();
+        alert("Tersimpan!"); location.reload();
     }
 
     function isiFormEdit(v) {
@@ -204,15 +209,13 @@
         document.getElementById('o1').value = opsi[0]||''; document.getElementById('o2').value = opsi[1]||'';
         document.getElementById('o3').value = opsi[2]||''; document.getElementById('o4').value = opsi[3]||'';
         document.getElementById('q-kunci').value = v[6];
-        document.getElementById('i-status').value = v[7];
         document.getElementById('btn-cancel-edit').classList.remove('hidden');
         document.getElementById('form-title').innerText = "Edit Soal " + v[0];
         toggleOpsi();
     }
 
     function toggleOpsi() {
-        const t = document.getElementById('i-tipe').value;
-        document.getElementById('opsi-container').style.display = (t === "IS") ? "none" : "block";
+        document.getElementById('opsi-container').style.display = (document.getElementById('i-tipe').value === "IS") ? "none" : "block";
     }
 
     function resetFormSoal() {
@@ -222,7 +225,7 @@
         document.getElementById('form-title').innerText = "Form Soal";
     }
 
-    // --- LOGIKA SISWA ---
+    // --- LOGIKA DATA SISWA ---
     async function muatTabelSiswa() {
         const r = await fetch(`${BASE_URL}?action=getDataSiswa`);
         const d = await r.json();
@@ -258,8 +261,7 @@
         const terpilih = Array.from(document.querySelectorAll('.check-siswa:checked')).map(cb => cb.value);
         if (terpilih.length === 0) return alert("Pilih siswa dulu!");
         for (let nis of terpilih) await fetch(BASE_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "updateIzinSiswa", nis, status }) });
-        alert("Selesai!"); muatTabelSiswa();
-        document.getElementById('master-checkbox').checked = false;
+        alert("Pembaruan masal selesai!"); muatTabelSiswa();
     }
 
     function tambahSiswaDialog() {
@@ -272,7 +274,7 @@
         setTimeout(muatTabelSiswa, 1000);
     }
 
-    // --- LOGIKA JADWAL ---
+    // --- LOGIKA JADWAL & REKAP ---
     async function muatJadwal() {
         const r = await fetch(`${BASE_URL}?action=getPengaturan`);
         const d = await r.json();
