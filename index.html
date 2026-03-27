@@ -6,7 +6,7 @@
     <title>CBT SMK - Ujian Online</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Animasi Loading Update */
+        /* Animasi Loading untuk Update Otomatis */
         .loader {
             border: 8px solid #f3f3f3;
             border-top: 8px solid #3498db;
@@ -17,6 +17,7 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
+        /* Overlay Full Screen saat Update */
         #update-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.95); color: white;
@@ -44,7 +45,8 @@
             <div id="timer">00:00:00</div>
         </header>
 
-        <div id="question-container"></div>
+        <div id="question-container">
+            </div>
 
         <div style="text-align: center; margin-top: 30px; padding-bottom: 50px;">
             <button class="btn-submit" onclick="submitJawaban()">Akhiri & Kirim Jawaban</button>
@@ -54,33 +56,32 @@
     <script src="script.js"></script>
 
     <script>
-        // Pakai var agar global
         var lastVersion = 0;
 
         async function cekPerubahanSoal() {
-            // Pastikan BASE_URL sudah siap dari script.js
+            // Cek apakah BASE_URL dari script.js sudah terbaca
             if (typeof BASE_URL === 'undefined' || !BASE_URL) return;
 
             try {
-                // Tambahkan parameter anti-cache t= agar data selalu segar dari server
+                // Gunakan anti-cache t= agar tidak mengambil data lama dari browser
                 const resp = await fetch(BASE_URL + "?action=checkUpdate&t=" + new Date().getTime());
                 const data = await resp.json();
                 
-                // Jika server mengirim null, kita anggap versi 1 agar tidak error
+                // Backup jika server kirim data kosong
                 let serverVersion = data.lastUpdate || 1;
 
-                // Pantau di Console
+                // Logging untuk pantauan di Console
                 console.log("Radar: Server=" + serverVersion + " | Lokal=" + lastVersion);
 
-                // Set versi awal saat pertama kali radar jalan
+                // Set versi awal saat pertama kali halaman dimuat
                 if (lastVersion === 0) {
                     lastVersion = serverVersion;
                     return;
                 }
 
-                // Jika ada selisih waktu (angka server lebih besar), tandanya ada perubahan
+                // Jika terdeteksi perubahan versi di server
                 if (serverVersion > lastVersion) {
-                    console.log("!!! PERUBAHAN TERDETEKSI !!!");
+                    console.log("!!! UPDATE SOAL TERDETEKSI !!!");
                     tampilkanLoadingUpdate();
                 }
             } catch (e) { 
@@ -89,6 +90,7 @@
         }
 
         function tampilkanLoadingUpdate() {
+            // Mencegah overlay muncul ganda
             if (document.getElementById('update-overlay')) return;
 
             const overlay = document.createElement('div');
@@ -96,22 +98,22 @@
             overlay.innerHTML = `
                 <div class="loader"></div>
                 <h2 style="margin-top:20px;">PEMBARUAN DATA...</h2>
-                <p style="padding: 0 20px; opacity: 0.8;">Admin baru saja memperbarui soal atau jadwal.<br>Halaman akan dimuat ulang otomatis.</p>
+                <p style="padding: 0 20px; opacity: 0.8;">Admin baru saja melakukan perbaikan soal.<br>Jawaban Anda tersimpan, halaman akan memuat ulang.</p>
             `;
             document.body.appendChild(overlay);
             
-            // Beri jeda sebentar sebelum reload agar siswa sempat baca pesan
+            // Beri jeda 2.5 detik agar siswa bisa baca pesan sebelum reload
             setTimeout(() => {
                 location.reload();
             }, 2500);
         }
 
-        // Radar aktif 3 detik setelah halaman terbuka
+        // Jalankan radar pertama kali setelah 5 detik agar script.js siap sepenuhnya
         setTimeout(() => {
             cekPerubahanSoal();
-            // Cek setiap 30 detik
+            // Interval pengecekan setiap 30 detik
             setInterval(cekPerubahanSoal, 30000);
-        }, 3000);
+        }, 5000);
     </script>
 
 </body>
