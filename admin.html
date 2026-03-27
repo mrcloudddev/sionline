@@ -35,8 +35,6 @@
         .btn-sm { padding: 5px 10px; font-size: 12px; }
         .hidden { display: none; }
         .badge { padding: 4px 8px; border-radius: 4px; color: white; font-size: 11px; font-weight: bold; }
-        .btn-green { background: var(--green); }
-        .btn-red { background: var(--red); }
     </style>
 </head>
 <body>
@@ -83,14 +81,14 @@
                 </div>
             </div>
 
-            <label>Rombel Spesifik (Contoh: X BP, XI TSM 1, atau kosongkan jika Umum):</label>
+            <label>Rombel Spesifik:</label>
             <input type="text" id="i-rombel" placeholder="Tulis kelas spesifik...">
 
             <label>Pertanyaan:</label>
             <textarea id="q-text" rows="4" placeholder="Ketik Pertanyaan..."></textarea>
 
             <div id="opsi-container">
-                <label>Opsi 1 - 4 / Pasangan A - D:</label>
+                <label>Opsi Jawaban:</label>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                     <input id="o1" placeholder="Opsi A"><input id="o2" placeholder="Opsi B">
                     <input id="o3" placeholder="Opsi C"><input id="o4" placeholder="Opsi D">
@@ -116,14 +114,26 @@
         </div>
     </div>
 
+    <div id="p-siswa" class="panel">
+        <h2>Data Siswa & Perizinan</h2>
+        <div style="margin: 15px 0; display: flex; gap: 10px;">
+            <input type="text" id="cari-siswa" placeholder="Cari Nama atau NIS..." onkeyup="filterSiswa()" style="flex: 1;">
+            <button class="btn btn-blue" onclick="muatTabelSiswa()">🔄 Refresh Data</button>
+        </div>
+        <table id="t-siswa-table">
+            <thead>
+                <tr><th>NIS</th><th>Nama</th><th>Kelas</th><th>Jurusan</th><th>Izin</th><th>Aksi</th></tr>
+            </thead>
+            <tbody id="t-siswa-body"></tbody>
+        </table>
+    </div>
+
     <div id="p-nilai" class="panel"><h2>Rekap Nilai</h2><table id="t-nilai"></table></div>
-    <div id="p-siswa" class="panel"><h2>Data Siswa</h2><table id="t-siswa"></table></div>
     <div id="p-absen" class="panel"><h2>Absensi Guru</h2><table id="t-absen"></table></div>
 </div>
 
 <script>
-    // PASTIKAN LINK INI SESUAI DENGAN DEPLOY TERBARU
-    const BASE_URL = "https://script.google.com/macros/s/AKfycby-Fy0hNaP9p3zsAi42vekzI_JYndRIdoNRmQq3ZtW13u27yXNtKfH3PiJhSQfOqTfy/exec";
+    const BASE_URL = "https://script.google.com/macros/s/AKfycbxqgphHpQvmF80rpTdOi5oRIqJz9I-gy5iQNZRiGUs_8uKqR0jozyOC7THD1Vw6iwA/exec";
 
     function showPanel(id, el) {
         document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
@@ -132,10 +142,40 @@
         el.classList.add('active');
         if(id === 'p-dash') muatJadwal();
         if(id === 'p-nilai') muatTabel('getRekapNilai', 't-nilai');
-        if(id === 'p-siswa') muatTabel('getDataSiswa', 't-siswa');
+        if(id === 'p-siswa') muatTabelSiswa();
         if(id === 'p-absen') muatTabel('getAbsensi', 't-absen');
     }
 
+    // --- MANAJEMEN SISWA ---
+    async function muatTabelSiswa() {
+        const r = await fetch(`${BASE_URL}?action=getDataSiswa`);
+        const d = await r.json();
+        const body = document.getElementById('t-siswa-body');
+        body.innerHTML = d.map(v => {
+            const isIzin = (v[4] || "").toString().trim() === "Ya";
+            return `<tr>
+                <td>${v[0]}</td><td>${v[1]}</td><td>${v[2]}</td><td>${v[3]}</td>
+                <td><span class="badge ${isIzin?'btn-green':'btn-red'}">${v[4]||'Tidak'}</span></td>
+                <td><button class="btn btn-sm ${isIzin?'btn-red':'btn-green'}" onclick="ubahIzinSiswa('${v[0]}','${isIzin?'Tidak':'Ya'}')">${isIzin?'Cabut':'Beri'} Izin</button></td>
+            </tr>`;
+        }).join('');
+    }
+
+    async function ubahIzinSiswa(nis, status) {
+        await fetch(BASE_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "updateIzinSiswa", nis, status }) });
+        setTimeout(muatTabelSiswa, 1500);
+    }
+
+    function filterSiswa() {
+        const input = document.getElementById("cari-siswa").value.toUpperCase();
+        const tr = document.getElementById("t-siswa-body").getElementsByTagName("tr");
+        for (let i = 0; i < tr.length; i++) {
+            const txt = tr[i].innerText.toUpperCase();
+            tr[i].style.display = txt.includes(input) ? "" : "none";
+        }
+    }
+
+    // --- MANAJEMEN SOAL ---
     function switchSubSoal(mode) {
         document.getElementById('sub-soal-input').classList.toggle('hidden', mode !== 'input');
         document.getElementById('sub-soal-daftar').classList.toggle('hidden', mode !== 'daftar');
@@ -144,29 +184,11 @@
         if(mode === 'daftar') muatDatabaseSoal();
     }
 
-    // RESET FORM SOAL
-    function resetFormSoal() {
-        document.getElementById('form-title').innerText = "Tambah Soal Baru";
-        document.getElementById('edit-id').value = "";
-        document.getElementById('i-rombel').value = "";
-        document.getElementById('q-text').value = "";
-        document.getElementById('o1').value = ""; document.getElementById('o2').value = "";
-        document.getElementById('o3').value = ""; document.getElementById('o4').value = "";
-        document.getElementById('q-kunci').value = "";
-        document.getElementById('btn-save-soal').innerText = "Simpan Soal";
-        document.getElementById('btn-cancel-edit').classList.add('hidden');
-    }
-
-    // LOGIKA SIMPAN (INPUT & UPDATE) - OTOMATIS TRIGGER RADAR SISWA
     async function simpanSoal() {
         const id = document.getElementById('edit-id').value;
-        const rombel = document.getElementById('i-rombel').value;
-        const tingkat = document.getElementById('i-tingkat').value;
-
         const data = {
-            action: id ? "updateSoal" : "inputSoal",
-            id: id,
-            tingkat: rombel ? rombel : tingkat,
+            action: id ? "updateSoal" : "inputSoal", id,
+            tingkat: document.getElementById('i-rombel').value || document.getElementById('i-tingkat').value,
             jurusan: document.getElementById('i-jurusan').value,
             tipe: document.getElementById('i-tipe').value,
             pertanyaan: document.getElementById('q-text').value,
@@ -174,64 +196,42 @@
             kunci: document.getElementById('q-kunci').value,
             status: document.getElementById('i-status').value
         };
-
-        const resp = await fetch(BASE_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
-        alert("Berhasil! Sistem siswa akan dimuat ulang otomatis dalam 30 detik."); 
-        location.reload();
+        await fetch(BASE_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
+        alert("Berhasil!"); location.reload();
     }
 
     async function muatDatabaseSoal() {
         const r = await fetch(`${BASE_URL}?action=getDatabaseSoal`);
         const d = await r.json();
         document.getElementById('t-database-soal').innerHTML = d.map(v => `
-            <tr>
-                <td>${v[0]}</td><td>${v[1]}</td><td>${v[3]}</td><td>${v[4].substring(0,30)}...</td>
-                <td>
-                    <button class="btn btn-sm btn-orange" onclick='isiFormEdit(${JSON.stringify(v)})'>Edit</button>
-                    <button class="btn btn-sm btn-red" onclick="hapusSoal('${v[0]}')">Hapus</button>
-                </td>
-            </tr>
-        `).join('');
+            <tr><td>${v[0]}</td><td>${v[1]}</td><td>${v[3]}</td><td>${v[4].substring(0,30)}...</td>
+            <td><button class="btn btn-sm btn-orange" onclick='isiFormEdit(${JSON.stringify(v)})'>Edit</button></td></tr>`).join('');
     }
 
     function isiFormEdit(v) {
         switchSubSoal('input');
-        document.getElementById('form-title').innerText = "Edit Soal " + v[0];
         document.getElementById('edit-id').value = v[0];
         document.getElementById('i-rombel').value = v[1];
-        document.getElementById('i-jurusan').value = v[2];
-        document.getElementById('i-tipe').value = v[3];
         document.getElementById('q-text').value = v[4];
         const opsi = JSON.parse(v[5]);
-        document.getElementById('o1').value = opsi[0]||""; document.getElementById('o2').value = opsi[1]||"";
-        document.getElementById('o3').value = opsi[2]||""; document.getElementById('o4').value = opsi[3]||"";
+        document.getElementById('o1').value = opsi[0]; document.getElementById('o2').value = opsi[1];
+        document.getElementById('o3').value = opsi[2]; document.getElementById('o4').value = opsi[3];
         document.getElementById('q-kunci').value = v[6];
-        document.getElementById('i-status').value = v[7];
-        document.getElementById('btn-save-soal').innerText = "Simpan Perubahan";
         document.getElementById('btn-cancel-edit').classList.remove('hidden');
-        toggleOpsi();
     }
 
-    async function hapusSoal(id) {
-        if(!confirm("Hapus soal " + id + "? (Radar siswa akan aktif)")) return;
-        await fetch(BASE_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "hapusSoal", id: id }) });
-        alert("Terhapus!"); muatDatabaseSoal();
-    }
-
+    // --- DASHBOARD ---
     async function muatJadwal() {
         const r = await fetch(`${BASE_URL}?action=getPengaturan`);
         const d = await r.json();
-        document.getElementById('t-jadwal').innerHTML = d.map(v => {
-            const isAktif = (v[3] || "").toLowerCase() === "aktif";
-            return `<tr><td>${v[0]}</td><td>${v[1]}</td><td><span class="badge ${isAktif?'btn-green':'btn-red'}">${v[3]}</span></td>
-            <td><button class="btn btn-sm ${isAktif?'btn-red':'btn-green'}" onclick="toggleUjian('${v[0]}', '${isAktif?'Nonaktif':'Aktif'}')">${isAktif?'Matikan':'Aktifkan'}</button></td></tr>`;
-        }).join('');
+        document.getElementById('t-jadwal').innerHTML = d.map(v => `
+            <tr><td>${v[0]}</td><td>${v[1]}</td><td><span class="badge ${v[3].toLowerCase()==='aktif'?'btn-green':'btn-red'}">${v[3]}</span></td>
+            <td><button class="btn btn-sm ${v[3].toLowerCase()==='aktif'?'btn-red':'btn-green'}" onclick="toggleUjian('${v[0]}','${v[3]==='Aktif'?'Nonaktif':'Aktif'}')">Toggle</button></td></tr>`).join('');
     }
 
     async function toggleUjian(mapel, status) {
         await fetch(BASE_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "toggleUjian", mapel, status }) });
-        alert("Status diperbarui! Siswa akan otomatis reload."); 
-        muatJadwal();
+        setTimeout(muatJadwal, 1500);
     }
 
     async function muatTabel(act, target) {
@@ -241,13 +241,8 @@
     }
 
     function toggleOpsi() {
-        const tipe = document.getElementById('i-tipe').value;
-        document.getElementById('opsi-container').style.display = (tipe === "IS" || tipe === "ES") ? "none" : "block";
-    }
-
-    async function handleBackup() {
-        await fetch(BASE_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "backupNilai" }) });
-        alert("Backup Berhasil!");
+        const t = document.getElementById('i-tipe').value;
+        document.getElementById('opsi-container').style.display = (t === "IS" || t === "ES") ? "none" : "block";
     }
 
     window.onload = muatJadwal;
