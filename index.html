@@ -61,27 +61,33 @@
 async function cekPerubahanSoal() {
     if (typeof BASE_URL === 'undefined' || !BASE_URL) return;
 
-    // Ambil data login dari memori untuk tahu NIS siswa ini
-    const sesi = localStorage.getItem("sesi_siswa");
-    if (!sesi) return;
-    const user = JSON.parse(sesi);
+    // 1. Ambil data login untuk tahu NIS siswa ini
+    const savedSesi = localStorage.getItem("sesi_siswa");
+    if(!savedSesi) return;
+    const user = JSON.parse(savedSesi);
+    const nisSiswa = user.nis || document.getElementById('username').value;
 
     try {
-        // Kita kirim NIS ke server saat cek update
-        const resp = await fetch(`${BASE_URL}?action=checkUpdate&nis=${user.nis || user.username}&t=${new Date().getTime()}`);
+        // 2. Kirim NIS ke server agar server cek status izin TERBARU
+        const resp = await fetch(`${BASE_URL}?action=checkUpdate&nis=${nisSiswa}&t=${new Date().getTime()}`);
         const data = await resp.json();
         
-        // --- FITUR CEKAL REAL-TIME ---
-        if (data.izin === "Tidak") {
-            alert("Akses Anda telah dicabut oleh Admin!");
+        // --- FITUR EKSEKUSI CEKAL ---
+        if (data.izin === "Tidak" || data.izin === "tidak") {
+            console.log("Akses dicabut oleh Admin!");
+            alert("MAAF: Akses ujian Anda telah dicabut oleh Admin/Guru. Silakan hubungi pengawas.");
+            
+            // Hapus semua jejak pengerjaan
             localStorage.removeItem("sesi_siswa");
             localStorage.removeItem("jawaban_lokal");
             localStorage.removeItem("sisa_waktu");
-            location.reload(); // Tendang siswa ke halaman login
+            
+            // Paksa kembali ke halaman login
+            location.reload(); 
             return;
         }
 
-        // --- FITUR UPDATE SOAL ---
+        // --- FITUR UPDATE SOAL (RADAR BIASA) ---
         let serverVersion = data.lastUpdate || 1;
         if (lastVersion === 0) {
             lastVersion = serverVersion;
@@ -91,7 +97,9 @@ async function cekPerubahanSoal() {
         if (serverVersion > lastVersion) {
             tampilkanLoadingUpdate();
         }
-    } catch (e) { console.log("Radar: Gangguan koneksi."); }
+    } catch (e) { 
+        console.log("Radar: Gagal cek status."); 
+    }
 }
 
         function tampilkanLoadingUpdate() {
