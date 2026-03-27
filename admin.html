@@ -58,17 +58,18 @@
         <div id="sub-soal-input">
             <h3 id="form-title">Form Soal</h3>
             <input type="hidden" id="edit-id">
+            
+            <label>Nama Mata Pelajaran:</label>
+            <input type="text" id="i-mapel-nama" placeholder="Contoh: Informatika / Koding dan AI">
+
             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
                 <div><label>Tingkatan:</label>
                     <select id="i-tingkat"><option>X</option><option>XI</option><option>XII</option></select>
                 </div>
-                <div><label>Mata Pelajaran / Jurusan:</label>
+                <div><label>Target Jurusan (Filter):</label>
                     <select id="i-jurusan">
-                        <option value="Umum">Umum</option>
-                        <option value="Informatika">Informatika</option>
-                        <option value="Dasar Dasar Program Keahlian">Dasar Dasar Program Keahlian</option>
-                        <option value="Koding dan AI">Koding dan AI</option>
-                        <option value="Broadcasting dan Perfilman">Broadcasting dan Perfilman</option>
+                        <option value="Umum">Umum (Semua Jurusan)</option>
+                        <option value="Broadcasting">Broadcasting</option>
                         <option value="TSM">TSM</option>
                     </select>
                 </div>
@@ -82,14 +83,15 @@
                     </select>
                 </div>
             </div>
+
             <input type="text" id="i-rombel" placeholder="Rombel Spesifik (Contoh: X BP)">
             <textarea id="q-text" rows="4" placeholder="Pertanyaan..."></textarea>
             
             <div id="opsi-container">
                 <label>Opsi Jawaban / Pasangan:</label>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <input id="o1" placeholder="Opsi A / Pasangan 1"><input id="o2" placeholder="Opsi B / Pasangan 2">
-                    <input id="o3" placeholder="Opsi C / Pasangan 3"><input id="o4" placeholder="Opsi D / Pasangan 4">
+                    <input id="o1" placeholder="Opsi A"><input id="o2" placeholder="Opsi B">
+                    <input id="o3" placeholder="Opsi C"><input id="o4" placeholder="Opsi D">
                 </div>
             </div>
             
@@ -103,18 +105,12 @@
             <div class="bulk-action-area">
                 <strong>Filter Mapel:</strong>
                 <select id="filter-mapel-soal" onchange="filterTabelSoal()" style="width: 250px; margin: 0;">
-                    <option value="">-- Semua --</option>
-                    <option value="Informatika">Informatika</option>
-                    <option value="Dasar Dasar Program Keahlian">Dasar Dasar Program Keahlian</option>
-                    <option value="Koding dan AI">Koding dan AI</option>
-                    <option value="Broadcasting dan Perfilman">Broadcasting dan Perfilman</option>
-                    <option value="TSM">TSM</option>
-                    <option value="Umum">Umum</option>
+                    <option value="">-- Memuat Mapel... --</option>
                 </select>
                 <input type="text" id="cari-soal-teks" placeholder="Cari teks soal..." onkeyup="filterTabelSoal()" style="flex: 1; margin: 0;">
             </div>
             <table>
-                <thead><tr><th>ID</th><th>Mapel/Rombel</th><th>Tipe</th><th>Soal</th><th>Aksi</th></tr></thead>
+                <thead><tr><th>ID</th><th>Mata Pelajaran (Target)</th><th>Tipe</th><th>Soal</th><th>Aksi</th></tr></thead>
                 <tbody id="t-database-soal"></tbody>
             </table>
         </div>
@@ -126,7 +122,7 @@
             <button class="btn btn-green" onclick="tambahSiswaDialog()">+ Tambah Siswa</button>
         </div>
         <div class="bulk-action-area">
-            <select id="filter-kelas-siswa" onchange="filterTabelSiswa()" style="width:150px; margin:0"><option value="">-- Kelas --</option></select>
+            <select id="filter-kelas-siswa" onchange="filterTabelSiswa()" style="width:150px; margin:0"><option value="">-- Semua --</option></select>
             <label><input type="checkbox" id="master-checkbox" onclick="toggleSelectAll(this)"> Pilih Semua</label>
             <button class="btn btn-sm btn-blue" onclick="bulkUpdateIzin('Ya')">Izinkan</button>
             <button class="btn btn-sm btn-red" onclick="bulkUpdateIzin('Tidak')">Cabut</button>
@@ -142,7 +138,7 @@
 </div>
 
 <script>
-    const BASE_URL = "https://script.google.com/macros/s/AKfycbwvdhcPrUBscr81VpzQ-Apdvdm6rIaoaUFU-rTVw5DExdtUmW1bQpPMVVBAgRuGPog/exec";
+    const BASE_URL = "https://script.google.com/macros/s/AKfycbwgY-xLxSVXPm591hxDz_4UBFLaBOPoKbQA3kVidPs5dGWIt-WOxU7orpcnb6k1sRRs/exec";
 
     function showPanel(id, el) {
         document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
@@ -154,7 +150,6 @@
         if(id === 'p-nilai') muatTabel('getRekapNilai', 't-nilai');
     }
 
-    // --- LOGIKA SOAL ---
     function switchSubSoal(mode) {
         document.getElementById('sub-soal-input').classList.toggle('hidden', mode !== 'input');
         document.getElementById('sub-soal-daftar').classList.toggle('hidden', mode !== 'daftar');
@@ -168,10 +163,21 @@
         const d = await r.json();
         const body = document.getElementById('t-database-soal');
         
+        // Update Filter Mapel Berdasarkan Kolom I (index 8)
+        const listMapel = [...new Set(d.map(v => v[8]).filter(v => v))].sort();
+        document.getElementById('filter-mapel-soal').innerHTML = '<option value="">-- Semua Mapel --</option>' + listMapel.map(m => `<option value="${m}">${m}</option>`).join('');
+
         body.innerHTML = d.map(v => `
-            <tr data-mapel="${v[2]}"><td>${v[0]}</td><td><small>${v[2]}</small><br><strong>${v[1]}</strong></td><td>${v[3]}</td><td>${v[4].substring(0,40)}...</td>
-            <td><button class="btn btn-sm btn-orange" onclick='isiFormEdit(${JSON.stringify(v)})'>Edit</button><button class="btn btn-sm btn-red" onclick="hapusSoal('${v[0]}')">Hapus</button></td></tr>`).join('');
-        filterTabelSoal();
+            <tr data-mapel="${v[8]||''}">
+                <td>${v[0]}</td>
+                <td><strong>${v[8]||'Tanpa Mapel'}</strong><br><small>Target: ${v[2]}</small></td>
+                <td>${v[3]}</td>
+                <td>${v[4].substring(0,40)}...</td>
+                <td>
+                    <button class="btn btn-sm btn-orange" onclick='isiFormEdit(${JSON.stringify(v)})'>Edit</button>
+                    <button class="btn btn-sm btn-red" onclick="hapusSoal('${v[0]}')">Hapus</button>
+                </td>
+            </tr>`).join('');
     }
 
     function filterTabelSoal() {
@@ -190,6 +196,7 @@
             action: id ? "updateSoal" : "inputSoal", id,
             tingkat: document.getElementById('i-rombel').value || document.getElementById('i-tingkat').value,
             jurusan: document.getElementById('i-jurusan').value,
+            mapel: document.getElementById('i-mapel-nama').value,
             tipe: document.getElementById('i-tipe').value,
             pertanyaan: document.getElementById('q-text').value,
             opsi: [document.getElementById('o1').value, document.getElementById('o2').value, document.getElementById('o3').value, document.getElementById('o4').value],
@@ -207,13 +214,13 @@
         document.getElementById('i-jurusan').value = v[2];
         document.getElementById('i-tipe').value = v[3];
         document.getElementById('q-text').value = v[4];
-        const opsi = JSON.parse(v[5]);
+        const opsi = v[5] ? JSON.parse(v[5]) : ['','','',''];
         document.getElementById('o1').value = opsi[0]||''; document.getElementById('o2').value = opsi[1]||'';
         document.getElementById('o3').value = opsi[2]||''; document.getElementById('o4').value = opsi[3]||'';
         document.getElementById('q-kunci').value = v[6];
         document.getElementById('i-status').value = v[7];
+        document.getElementById('i-mapel-nama').value = v[8]||'';
         document.getElementById('btn-cancel-edit').classList.remove('hidden');
-        document.getElementById('form-title').innerText = "Edit Soal " + v[0];
         toggleOpsi();
     }
 
@@ -231,19 +238,17 @@
     function resetFormSoal() {
         document.getElementById('edit-id').value = "";
         document.getElementById('q-text').value = "";
-        document.getElementById('i-rombel').value = "";
+        document.getElementById('i-mapel-nama').value = "";
         document.getElementById('btn-cancel-edit').classList.add('hidden');
-        document.getElementById('form-title').innerText = "Form Soal";
         toggleOpsi();
     }
 
-    // --- LOGIKA DATA SISWA ---
     async function muatTabelSiswa() {
         const r = await fetch(`${BASE_URL}?action=getDataSiswa`);
         const d = await r.json();
         const body = document.getElementById('t-siswa-body');
         const listKelas = [...new Set(d.map(v => v[2]))].sort();
-        document.getElementById('filter-kelas-siswa').innerHTML = '<option value="">-- Kelas --</option>' + listKelas.map(k => `<option value="${k}">${k}</option>`).join('');
+        document.getElementById('filter-kelas-siswa').innerHTML = '<option value="">-- Semua --</option>' + listKelas.map(k => `<option value="${k}">${k}</option>`).join('');
         body.innerHTML = d.map(v => {
             const isIzin = (v[4]||'').trim() === 'Ya';
             return `<tr data-kelas="${v[2]}"><td><input type="checkbox" class="check-siswa" value="${v[0]}"></td><td>${v[0]}</td><td>${v[1]}</td><td>${v[2]}</td>
@@ -270,7 +275,7 @@
         const terpilih = Array.from(document.querySelectorAll('.check-siswa:checked')).map(cb => cb.value);
         if (terpilih.length === 0) return alert("Pilih siswa dulu!");
         for (let nis of terpilih) await fetch(BASE_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "updateIzinSiswa", nis, status }) });
-        alert("Selesai!"); muatTabelSiswa();
+        alert("Pembaruan masal selesai!"); muatTabelSiswa();
         document.getElementById('master-checkbox').checked = false;
     }
 
@@ -284,7 +289,6 @@
         setTimeout(muatTabelSiswa, 1000);
     }
 
-    // --- LOGIKA JADWAL ---
     async function muatJadwal() {
         const r = await fetch(`${BASE_URL}?action=getPengaturan`);
         const d = await r.json();
