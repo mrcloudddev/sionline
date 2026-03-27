@@ -58,36 +58,41 @@
     <script>
         var lastVersion = 0;
 
-        async function cekPerubahanSoal() {
-            // Cek apakah BASE_URL dari script.js sudah terbaca
-            if (typeof BASE_URL === 'undefined' || !BASE_URL) return;
+async function cekPerubahanSoal() {
+    if (typeof BASE_URL === 'undefined' || !BASE_URL) return;
 
-            try {
-                // Gunakan anti-cache t= agar tidak mengambil data lama dari browser
-                const resp = await fetch(BASE_URL + "?action=checkUpdate&t=" + new Date().getTime());
-                const data = await resp.json();
-                
-                // Backup jika server kirim data kosong
-                let serverVersion = data.lastUpdate || 1;
+    // Ambil data login dari memori untuk tahu NIS siswa ini
+    const sesi = localStorage.getItem("sesi_siswa");
+    if (!sesi) return;
+    const user = JSON.parse(sesi);
 
-                // Logging untuk pantauan di Console
-                console.log("Radar: Server=" + serverVersion + " | Lokal=" + lastVersion);
-
-                // Set versi awal saat pertama kali halaman dimuat
-                if (lastVersion === 0) {
-                    lastVersion = serverVersion;
-                    return;
-                }
-
-                // Jika terdeteksi perubahan versi di server
-                if (serverVersion > lastVersion) {
-                    console.log("!!! UPDATE SOAL TERDETEKSI !!!");
-                    tampilkanLoadingUpdate();
-                }
-            } catch (e) { 
-                console.log("Radar: Gagal terhubung ke server."); 
-            }
+    try {
+        // Kita kirim NIS ke server saat cek update
+        const resp = await fetch(`${BASE_URL}?action=checkUpdate&nis=${user.nis || user.username}&t=${new Date().getTime()}`);
+        const data = await resp.json();
+        
+        // --- FITUR CEKAL REAL-TIME ---
+        if (data.izin === "Tidak") {
+            alert("Akses Anda telah dicabut oleh Admin!");
+            localStorage.removeItem("sesi_siswa");
+            localStorage.removeItem("jawaban_lokal");
+            localStorage.removeItem("sisa_waktu");
+            location.reload(); // Tendang siswa ke halaman login
+            return;
         }
+
+        // --- FITUR UPDATE SOAL ---
+        let serverVersion = data.lastUpdate || 1;
+        if (lastVersion === 0) {
+            lastVersion = serverVersion;
+            return;
+        }
+
+        if (serverVersion > lastVersion) {
+            tampilkanLoadingUpdate();
+        }
+    } catch (e) { console.log("Radar: Gangguan koneksi."); }
+}
 
         function tampilkanLoadingUpdate() {
             // Mencegah overlay muncul ganda
