@@ -73,17 +73,26 @@
                     </select>
                 </div>
                 <div><label>Tipe Soal:</label>
-                    <select id="i-tipe" onchange="toggleOpsi()"><option value="PG">Pilihan Ganda</option><option value="IS">Isian Singkat</option></select>
+                    <select id="i-tipe" onchange="toggleOpsi()">
+                        <option value="PG">Pilihan Ganda</option>
+                        <option value="PGK">PG Kompleks</option>
+                        <option value="IS">Isian Singkat</option>
+                        <option value="MJD">Menjodohkan</option>
+                        <option value="ES">Esai</option>
+                    </select>
                 </div>
             </div>
             <input type="text" id="i-rombel" placeholder="Rombel Spesifik (Contoh: X BP)">
             <textarea id="q-text" rows="4" placeholder="Pertanyaan..."></textarea>
+            
             <div id="opsi-container">
+                <label>Opsi Jawaban / Pasangan:</label>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <input id="o1" placeholder="Opsi A"><input id="o2" placeholder="Opsi B">
-                    <input id="o3" placeholder="Opsi C"><input id="o4" placeholder="Opsi D">
+                    <input id="o1" placeholder="Opsi A / Pasangan 1"><input id="o2" placeholder="Opsi B / Pasangan 2">
+                    <input id="o3" placeholder="Opsi C / Pasangan 3"><input id="o4" placeholder="Opsi D / Pasangan 4">
                 </div>
             </div>
+            
             <input id="q-kunci" placeholder="Kunci Jawaban">
             <select id="i-status"><option value="aktif">Aktif</option><option value="nonaktif">Nonaktif</option></select>
             <button class="btn btn-blue" style="width:100%" onclick="simpanSoal()">Simpan Soal</button>
@@ -94,7 +103,7 @@
             <div class="bulk-action-area">
                 <strong>Filter Mapel:</strong>
                 <select id="filter-mapel-soal" onchange="filterTabelSoal()" style="width: 200px; margin: 0;"><option value="">-- Semua --</option></select>
-                <input type="text" id="cari-soal-teks" placeholder="Cari teks soal..." onkeyup="filterTabelSoal()" style="flex: 1; margin: 0;">
+                <input type="text" id="cari-soal-teks" placeholder="Cari potongan soal..." onkeyup="filterTabelSoal()" style="flex: 1; margin: 0;">
             </div>
             <table>
                 <thead><tr><th>ID</th><th>Mapel/Rombel</th><th>Tipe</th><th>Soal</th><th>Aksi</th></tr></thead>
@@ -109,13 +118,12 @@
             <button class="btn btn-green" onclick="tambahSiswaDialog()">+ Tambah Siswa</button>
         </div>
         <div class="bulk-action-area">
-            <strong>Pilih Kelas:</strong>
-            <select id="filter-kelas-siswa" onchange="filterTabelSiswa()" style="width:150px; margin:0"><option value="">-- Semua --</option></select>
+            <select id="filter-kelas-siswa" onchange="filterTabelSiswa()" style="width:150px; margin:0"><option value="">-- Kelas --</option></select>
             <label><input type="checkbox" id="master-checkbox" onclick="toggleSelectAll(this)"> Pilih Semua</label>
             <button class="btn btn-sm btn-blue" onclick="bulkUpdateIzin('Ya')">Izinkan</button>
             <button class="btn btn-sm btn-red" onclick="bulkUpdateIzin('Tidak')">Cabut</button>
         </div>
-        <input type="text" id="cari-siswa" placeholder="Cari Nama/NIS..." onkeyup="filterTabelSiswa()">
+        <input type="text" id="cari-siswa" placeholder="Cari..." onkeyup="filterTabelSiswa()">
         <table>
             <thead><tr><th width="30px"></th><th>NIS</th><th>Nama</th><th>Kelas</th><th>Izin</th><th>Aksi</th></tr></thead>
             <tbody id="t-siswa-body"></tbody>
@@ -138,7 +146,7 @@
         if(id === 'p-nilai') muatTabel('getRekapNilai', 't-nilai');
     }
 
-    // --- LOGIKA KELOLA SOAL ---
+    // --- SOAL LOGIC ---
     function switchSubSoal(mode) {
         document.getElementById('sub-soal-input').classList.toggle('hidden', mode !== 'input');
         document.getElementById('sub-soal-daftar').classList.toggle('hidden', mode !== 'daftar');
@@ -154,16 +162,9 @@
         const listMapel = [...new Set(d.map(v => v[2]))].sort();
         document.getElementById('filter-mapel-soal').innerHTML = '<option value="">-- Semua --</option>' + listMapel.map(m => `<option value="${m}">${m}</option>`).join('');
         body.innerHTML = d.map(v => `
-            <tr data-mapel="${v[2]}">
-                <td>${v[0]}</td>
-                <td><small>${v[2]}</small><br><strong>${v[1]}</strong></td>
-                <td>${v[3]}</td>
-                <td>${v[4].substring(0,40)}...</td>
-                <td>
-                    <button class="btn btn-sm btn-orange" onclick='isiFormEdit(${JSON.stringify(v)})'>Edit</button>
-                    <button class="btn btn-sm btn-red" onclick="hapusSoal('${v[0]}')">Hapus</button>
-                </td>
-            </tr>`).join('');
+            <tr data-mapel="${v[2]}"><td>${v[0]}</td><td><small>${v[2]}</small><br><strong>${v[1]}</strong></td><td>${v[3]}</td><td>${v[4].substring(0,40)}...</td>
+            <td><button class="btn btn-sm btn-orange" onclick='isiFormEdit(${JSON.stringify(v)})'>Edit</button><button class="btn btn-sm btn-red" onclick="hapusSoal('${v[0]}')">Hapus</button></td></tr>`).join('');
+        filterTabelSoal();
     }
 
     function filterTabelSoal() {
@@ -174,12 +175,6 @@
             const match = (mapel === "" || tr[i].getAttribute("data-mapel").toUpperCase().includes(mapel)) && tr[i].innerText.toUpperCase().includes(cari);
             tr[i].style.display = match ? "" : "none";
         }
-    }
-
-    async function hapusSoal(id) {
-        if(!confirm("Hapus soal " + id + "?")) return;
-        await fetch(BASE_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "hapusSoal", id: id }) });
-        alert("Berhasil dihapus!"); muatDatabaseSoal();
     }
 
     async function simpanSoal() {
@@ -195,7 +190,7 @@
             status: document.getElementById('i-status').value
         };
         await fetch(BASE_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
-        alert("Tersimpan!"); location.reload();
+        alert("Berhasil!"); location.reload();
     }
 
     function isiFormEdit(v) {
@@ -209,23 +204,33 @@
         document.getElementById('o1').value = opsi[0]||''; document.getElementById('o2').value = opsi[1]||'';
         document.getElementById('o3').value = opsi[2]||''; document.getElementById('o4').value = opsi[3]||'';
         document.getElementById('q-kunci').value = v[6];
+        document.getElementById('i-status').value = v[7];
         document.getElementById('btn-cancel-edit').classList.remove('hidden');
         document.getElementById('form-title').innerText = "Edit Soal " + v[0];
         toggleOpsi();
     }
 
     function toggleOpsi() {
-        document.getElementById('opsi-container').style.display = (document.getElementById('i-tipe').value === "IS") ? "none" : "block";
+        const tipe = document.getElementById('i-tipe').value;
+        document.getElementById('opsi-container').style.display = (tipe === "IS" || tipe === "ES") ? "none" : "block";
+    }
+
+    async function hapusSoal(id) {
+        if(!confirm("Hapus soal " + id + "?")) return;
+        await fetch(BASE_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "hapusSoal", id: id }) });
+        alert("Terhapus!"); muatDatabaseSoal();
     }
 
     function resetFormSoal() {
         document.getElementById('edit-id').value = "";
         document.getElementById('q-text').value = "";
+        document.getElementById('i-jurusan').value = "Umum";
         document.getElementById('btn-cancel-edit').classList.add('hidden');
         document.getElementById('form-title').innerText = "Form Soal";
+        toggleOpsi();
     }
 
-    // --- LOGIKA DATA SISWA ---
+    // --- SISWA LOGIC ---
     async function muatTabelSiswa() {
         const r = await fetch(`${BASE_URL}?action=getDataSiswa`);
         const d = await r.json();
@@ -234,12 +239,9 @@
         document.getElementById('filter-kelas-siswa').innerHTML = '<option value="">-- Semua --</option>' + listKelas.map(k => `<option value="${k}">${k}</option>`).join('');
         body.innerHTML = d.map(v => {
             const isYa = (v[4]||'').trim() === 'Ya';
-            return `<tr data-kelas="${v[2]}">
-                <td><input type="checkbox" class="check-siswa" value="${v[0]}"></td>
-                <td>${v[0]}</td><td>${v[1]}</td><td>${v[2]}</td>
+            return `<tr data-kelas="${v[2]}"><td><input type="checkbox" class="check-siswa" value="${v[0]}"></td><td>${v[0]}</td><td>${v[1]}</td><td>${v[2]}</td>
                 <td><span class="badge ${isYa?'btn-green':'btn-red'}">${v[4]||'Tidak'}</span></td>
-                <td><button class="btn btn-sm ${isYa?'btn-red':'btn-green'}" onclick="ubahIzinSiswa('${v[0]}','${isYa?'Tidak':'Ya'}')">${isYa?'Cabut':'Beri'}</button></td>
-            </tr>`;
+                <td><button class="btn btn-sm ${isYa?'btn-red':'btn-green'}" onclick="ubahIzinSiswa('${v[0]}','${isYa?'Tidak':'Ya'}')">${isYa?'Cabut':'Beri'}</button></td></tr>`;
         }).join('');
     }
 
@@ -262,6 +264,7 @@
         if (terpilih.length === 0) return alert("Pilih siswa dulu!");
         for (let nis of terpilih) await fetch(BASE_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "updateIzinSiswa", nis, status }) });
         alert("Pembaruan masal selesai!"); muatTabelSiswa();
+        document.getElementById('master-checkbox').checked = false;
     }
 
     function tambahSiswaDialog() {
@@ -274,14 +277,14 @@
         setTimeout(muatTabelSiswa, 1000);
     }
 
-    // --- LOGIKA JADWAL & REKAP ---
+    // --- JADWAL ---
     async function muatJadwal() {
         const r = await fetch(`${BASE_URL}?action=getPengaturan`);
         const d = await r.json();
         document.getElementById('t-jadwal').innerHTML = d.map(v => {
             const isAktif = (v[3]||'').toLowerCase() === 'aktif';
             return `<tr><td>${v[0]}</td><td>${v[1]}</td><td><span class="badge ${isAktif?'btn-green':'btn-red'}">${v[3]}</span></td>
-            <td><button class="btn btn-sm ${isAktif?'btn-red':'btn-green'}" onclick="toggleUjian('${v[0]}', '${isAktif?'Nonaktif':'Aktif'}')">${isAktif?'Off':'On'}</button></td></tr>`;
+            <td><button class="btn btn-sm ${isYa?'btn-red':'btn-green'}" onclick="toggleUjian('${v[0]}', '${isAktif?'Nonaktif':'Aktif'}')">${isAktif?'Off':'On'}</button></td></tr>`;
         }).join('');
     }
 
