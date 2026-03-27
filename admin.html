@@ -102,8 +102,16 @@
         <div id="sub-soal-daftar" class="hidden">
             <div class="bulk-action-area">
                 <strong>Filter Mapel:</strong>
-                <select id="filter-mapel-soal" onchange="filterTabelSoal()" style="width: 200px; margin: 0;"><option value="">-- Semua --</option></select>
-                <input type="text" id="cari-soal-teks" placeholder="Cari potongan soal..." onkeyup="filterTabelSoal()" style="flex: 1; margin: 0;">
+                <select id="filter-mapel-soal" onchange="filterTabelSoal()" style="width: 250px; margin: 0;">
+                    <option value="">-- Semua --</option>
+                    <option value="Informatika">Informatika</option>
+                    <option value="Dasar Dasar Program Keahlian">Dasar Dasar Program Keahlian</option>
+                    <option value="Koding dan AI">Koding dan AI</option>
+                    <option value="Broadcasting dan Perfilman">Broadcasting dan Perfilman</option>
+                    <option value="TSM">TSM</option>
+                    <option value="Umum">Umum</option>
+                </select>
+                <input type="text" id="cari-soal-teks" placeholder="Cari teks soal..." onkeyup="filterTabelSoal()" style="flex: 1; margin: 0;">
             </div>
             <table>
                 <thead><tr><th>ID</th><th>Mapel/Rombel</th><th>Tipe</th><th>Soal</th><th>Aksi</th></tr></thead>
@@ -146,7 +154,7 @@
         if(id === 'p-nilai') muatTabel('getRekapNilai', 't-nilai');
     }
 
-    // --- SOAL LOGIC ---
+    // --- LOGIKA SOAL ---
     function switchSubSoal(mode) {
         document.getElementById('sub-soal-input').classList.toggle('hidden', mode !== 'input');
         document.getElementById('sub-soal-daftar').classList.toggle('hidden', mode !== 'daftar');
@@ -159,8 +167,7 @@
         const r = await fetch(`${BASE_URL}?action=getDatabaseSoal`);
         const d = await r.json();
         const body = document.getElementById('t-database-soal');
-        const listMapel = [...new Set(d.map(v => v[2]))].sort();
-        document.getElementById('filter-mapel-soal').innerHTML = '<option value="">-- Semua --</option>' + listMapel.map(m => `<option value="${m}">${m}</option>`).join('');
+        
         body.innerHTML = d.map(v => `
             <tr data-mapel="${v[2]}"><td>${v[0]}</td><td><small>${v[2]}</small><br><strong>${v[1]}</strong></td><td>${v[3]}</td><td>${v[4].substring(0,40)}...</td>
             <td><button class="btn btn-sm btn-orange" onclick='isiFormEdit(${JSON.stringify(v)})'>Edit</button><button class="btn btn-sm btn-red" onclick="hapusSoal('${v[0]}')">Hapus</button></td></tr>`).join('');
@@ -224,24 +231,24 @@
     function resetFormSoal() {
         document.getElementById('edit-id').value = "";
         document.getElementById('q-text').value = "";
-        document.getElementById('i-jurusan').value = "Umum";
+        document.getElementById('i-rombel').value = "";
         document.getElementById('btn-cancel-edit').classList.add('hidden');
         document.getElementById('form-title').innerText = "Form Soal";
         toggleOpsi();
     }
 
-    // --- SISWA LOGIC ---
+    // --- LOGIKA DATA SISWA ---
     async function muatTabelSiswa() {
         const r = await fetch(`${BASE_URL}?action=getDataSiswa`);
         const d = await r.json();
         const body = document.getElementById('t-siswa-body');
         const listKelas = [...new Set(d.map(v => v[2]))].sort();
-        document.getElementById('filter-kelas-siswa').innerHTML = '<option value="">-- Semua --</option>' + listKelas.map(k => `<option value="${k}">${k}</option>`).join('');
+        document.getElementById('filter-kelas-siswa').innerHTML = '<option value="">-- Kelas --</option>' + listKelas.map(k => `<option value="${k}">${k}</option>`).join('');
         body.innerHTML = d.map(v => {
-            const isYa = (v[4]||'').trim() === 'Ya';
+            const isIzin = (v[4]||'').trim() === 'Ya';
             return `<tr data-kelas="${v[2]}"><td><input type="checkbox" class="check-siswa" value="${v[0]}"></td><td>${v[0]}</td><td>${v[1]}</td><td>${v[2]}</td>
-                <td><span class="badge ${isYa?'btn-green':'btn-red'}">${v[4]||'Tidak'}</span></td>
-                <td><button class="btn btn-sm ${isYa?'btn-red':'btn-green'}" onclick="ubahIzinSiswa('${v[0]}','${isYa?'Tidak':'Ya'}')">${isYa?'Cabut':'Beri'}</button></td></tr>`;
+                <td><span class="badge ${isIzin?'btn-green':'btn-red'}">${v[4]||'Tidak'}</span></td>
+                <td><button class="btn btn-sm ${isIzin?'btn-red':'btn-green'}" onclick="ubahIzinSiswa('${v[0]}','${isIzin?'Tidak':'Ya'}')">${isIzin?'Cabut':'Beri'}</button></td></tr>`;
         }).join('');
     }
 
@@ -263,7 +270,7 @@
         const terpilih = Array.from(document.querySelectorAll('.check-siswa:checked')).map(cb => cb.value);
         if (terpilih.length === 0) return alert("Pilih siswa dulu!");
         for (let nis of terpilih) await fetch(BASE_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "updateIzinSiswa", nis, status }) });
-        alert("Pembaruan masal selesai!"); muatTabelSiswa();
+        alert("Selesai!"); muatTabelSiswa();
         document.getElementById('master-checkbox').checked = false;
     }
 
@@ -277,14 +284,14 @@
         setTimeout(muatTabelSiswa, 1000);
     }
 
-    // --- JADWAL ---
+    // --- LOGIKA JADWAL ---
     async function muatJadwal() {
         const r = await fetch(`${BASE_URL}?action=getPengaturan`);
         const d = await r.json();
         document.getElementById('t-jadwal').innerHTML = d.map(v => {
             const isAktif = (v[3]||'').toLowerCase() === 'aktif';
             return `<tr><td>${v[0]}</td><td>${v[1]}</td><td><span class="badge ${isAktif?'btn-green':'btn-red'}">${v[3]}</span></td>
-            <td><button class="btn btn-sm ${isYa?'btn-red':'btn-green'}" onclick="toggleUjian('${v[0]}', '${isAktif?'Nonaktif':'Aktif'}')">${isAktif?'Off':'On'}</button></td></tr>`;
+            <td><button class="btn btn-sm ${isAktif?'btn-red':'btn-green'}" onclick="toggleUjian('${v[0]}', '${isAktif?'Nonaktif':'Aktif'}')">${isAktif?'Off':'On'}</button></td></tr>`;
         }).join('');
     }
 
