@@ -17,6 +17,9 @@ async function prosesLogin() {
         const res = await resp.json();
         
         if(res.status === "Sukses" && res.izin === "Ya") {
+            // PENTING: Simpan NIS ke dalam objek res agar radar bisa membacanya nanti
+            res.nis = user; 
+            
             // SIMPAN SESI LOGIN KE LOKAL
             localStorage.setItem("sesi_siswa", JSON.stringify(res));
             jalankanUjian(res);
@@ -47,12 +50,11 @@ async function cekStatusDanLoadSoal(kelas, jurusan) {
         const res = await resp.json();
         
         if(res.status === "Aktif") {
-            // LOGIKA TIMER: Cek memori lokal dulu sebelum pakai durasi server
             const savedTime = localStorage.getItem("sisa_waktu");
             if (savedTime && parseInt(savedTime) > 0) {
-                mulaiTimer(null, parseInt(savedTime)); // Lanjutkan sisa detik
+                mulaiTimer(null, parseInt(savedTime)); 
             } else {
-                mulaiTimer(res.durasi, null); // Pakai durasi baru (menit)
+                mulaiTimer(res.durasi, null);
             }
 
             const respSoal = await fetch(`${BASE_URL}?action=getSoal&kelas=${encodeURIComponent(kelas)}&jurusan=${encodeURIComponent(jurusan)}`);
@@ -99,14 +101,13 @@ function simpanJawabanLokal(idSoal, nilai) {
     localStorage.setItem("jawaban_lokal", JSON.stringify(savedAnswers));
 }
 
-// --- 3. TIMER ANTI-RESET (LOGIKA SISA DETIK) ---
+// --- 3. TIMER ANTI-RESET ---
 function mulaiTimer(durasiMenit, sisaDetikManual) {
     let sisaDetik;
-
     if (sisaDetikManual !== null) {
-        sisaDetik = sisaDetikManual; // Gunakan sisa waktu tersimpan
+        sisaDetik = sisaDetikManual;
     } else {
-        sisaDetik = durasiMenit * 60; // Gunakan waktu baru dari server
+        sisaDetik = durasiMenit * 60;
     }
 
     if(timerInterval) clearInterval(timerInterval);
@@ -123,7 +124,6 @@ function mulaiTimer(durasiMenit, sisaDetikManual) {
         let mnt = Math.floor(sisaDetik/60), dtk = sisaDetik%60;
         document.getElementById('timer').innerText = `${mnt.toString().padStart(2,'0')}:${dtk.toString().padStart(2,'0')}`;
         
-        // Simpan sisa waktu ke memori browser setiap detik
         localStorage.setItem("sisa_waktu", sisaDetik);
         sisaDetik--;
     }, 1000);
