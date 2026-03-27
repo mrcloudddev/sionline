@@ -47,7 +47,14 @@ async function cekStatusDanLoadSoal(kelas, jurusan) {
         const res = await resp.json();
         
         if(res.status === "Aktif") {
-            mulaiTimer(res.durasi);
+            // LOGIKA TIMER: Cek memori lokal dulu sebelum pakai durasi server
+            const savedTime = localStorage.getItem("sisa_waktu");
+            if (savedTime && parseInt(savedTime) > 0) {
+                mulaiTimer(null, parseInt(savedTime)); // Lanjutkan sisa detik
+            } else {
+                mulaiTimer(res.durasi, null); // Pakai durasi baru (menit)
+            }
+
             const respSoal = await fetch(`${BASE_URL}?action=getSoal&kelas=${encodeURIComponent(kelas)}&jurusan=${encodeURIComponent(jurusan)}`);
             const soal = await respSoal.json();
             renderSoal(soal);
@@ -92,32 +99,33 @@ function simpanJawabanLokal(idSoal, nilai) {
     localStorage.setItem("jawaban_lokal", JSON.stringify(savedAnswers));
 }
 
-// --- 3. TIMER ANTI-RESET (MEMLANJUTKAN HITUNGAN) ---
-function mulaiTimer(durasiMenit) {
-    const savedTime = localStorage.getItem("sisa_waktu");
+// --- 3. TIMER ANTI-RESET (LOGIKA SISA DETIK) ---
+function mulaiTimer(durasiMenit, sisaDetikManual) {
     let sisaDetik;
 
-    if (savedTime && savedTime > 0) {
-        // Lanjutkan dari waktu terakhir sebelum refresh
-        sisaDetik = parseInt(savedTime);
+    if (sisaDetikManual !== null) {
+        sisaDetik = sisaDetikManual; // Gunakan sisa waktu tersimpan
     } else {
-        // Baru mulai ujian
-        sisaDetik = durasiMenit * 60;
+        sisaDetik = durasiMenit * 60; // Gunakan waktu baru dari server
     }
 
     if(timerInterval) clearInterval(timerInterval);
     
     timerInterval = setInterval(() => {
+        if (sisaDetik <= 0) {
+            clearInterval(timerInterval);
+            document.getElementById('timer').innerText = "00:00";
+            localStorage.removeItem("sisa_waktu");
+            submitJawaban(true);
+            return;
+        }
+
         let mnt = Math.floor(sisaDetik/60), dtk = sisaDetik%60;
         document.getElementById('timer').innerText = `${mnt.toString().padStart(2,'0')}:${dtk.toString().padStart(2,'0')}`;
         
         // Simpan sisa waktu ke memori browser setiap detik
         localStorage.setItem("sisa_waktu", sisaDetik);
-
-        if(sisaDetik-- <= 0) { 
-            clearInterval(timerInterval); 
-            submitJawaban(true); 
-        }
+        sisaDetik--;
     }, 1000);
 }
 
@@ -144,7 +152,7 @@ async function submitJawaban(auto = false) {
         alert("Berhasil Terkirim!"); 
         bersihkanMemori();
     } catch(e) { 
-        alert("Gagal Kirim! Coba tekan tombol kirim lagi."); 
+        alert("Gagal Kirim! Cek koneksi internet Anda."); 
         if(btn) { btn.innerText = "Kirim Jawaban"; btn.disabled = false; }
     }
 }
