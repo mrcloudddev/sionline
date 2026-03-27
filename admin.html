@@ -20,8 +20,10 @@
         .panel { background: white; padding: 25px; border-radius: 8px; display: none; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .panel.active { display: block; }
 
-        /* KONTROL MASAL AREA */
-        .bulk-action-area { background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+        /* SUB-NAV */
+        .sub-nav { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 15px; }
+        .btn-sub { padding: 8px 15px; border-radius: 5px; border: 1px solid #ddd; cursor: pointer; background: white; font-weight: 600; }
+        .btn-sub.active { background: var(--blue); color: white; border-color: var(--blue); }
 
         /* TABLES & FORMS */
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
@@ -33,6 +35,8 @@
         .btn-sm { padding: 5px 10px; font-size: 12px; }
         .hidden { display: none; }
         .badge { padding: 4px 8px; border-radius: 4px; color: white; font-size: 11px; font-weight: bold; }
+        
+        .bulk-action-area { background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
     </style>
 </head>
 <body>
@@ -55,48 +59,79 @@
         </table>
     </div>
 
+    <div id="p-soal" class="panel">
+        <div class="sub-nav">
+            <button id="btn-sub-input" class="btn-sub active" onclick="switchSubSoal('input')">➕ Input Soal Baru</button>
+            <button id="btn-sub-daftar" class="btn-sub" onclick="switchSubSoal('daftar')">📋 Daftar & Edit Soal</button>
+        </div>
+
+        <div id="sub-soal-input">
+            <h3 id="form-title">Tambah Soal Baru</h3>
+            <input type="hidden" id="edit-id">
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                <div><label>Tingkatan:</label>
+                    <select id="i-tingkat"><option>X</option><option>XI</option><option>XII</option></select>
+                </div>
+                <div><label>Jurusan:</label>
+                    <select id="i-jurusan"><option value="Umum">Umum</option><option value="Broadcasting">Broadcasting</option><option value="TSM">TSM</option></select>
+                </div>
+                <div><label>Tipe:</label>
+                    <select id="i-tipe" onchange="toggleOpsi()"><option value="PG">Pilihan Ganda</option><option value="IS">Isian Singkat</option></select>
+                </div>
+            </div>
+            <label>Rombel Spesifik:</label>
+            <input type="text" id="i-rombel" placeholder="Contoh: X BP">
+            <label>Pertanyaan:</label>
+            <textarea id="q-text" rows="4" placeholder="Ketik Pertanyaan..."></textarea>
+            <div id="opsi-container">
+                <label>Opsi Jawaban:</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <input id="o1" placeholder="Opsi A"><input id="o2" placeholder="Opsi B">
+                    <input id="o3" placeholder="Opsi C"><input id="o4" placeholder="Opsi D">
+                </div>
+            </div>
+            <label>Kunci Jawaban:</label>
+            <input id="q-kunci" placeholder="Kunci Jawaban">
+            <label>Status:</label>
+            <select id="i-status"><option value="aktif">Aktif</option><option value="nonaktif">Nonaktif</option></select>
+            <button class="btn btn-blue" style="width:100%; padding:15px; margin-top:10px" onclick="simpanSoal()">Simpan Soal</button>
+            <button class="btn btn-red hidden" id="btn-cancel-edit" onclick="resetFormSoal()">Batal Edit</button>
+        </div>
+
+        <div id="sub-soal-daftar" class="hidden">
+            <h3>Database Soal</h3>
+            <table>
+                <thead><tr><th>ID</th><th>Rombel</th><th>Tipe</th><th>Soal</th><th>Aksi</th></tr></thead>
+                <tbody id="t-database-soal"></tbody>
+            </table>
+        </div>
+    </div>
+
     <div id="p-siswa" class="panel">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <h2>Data Siswa & Perizinan</h2>
             <button class="btn btn-green" onclick="tambahSiswaDialog()">+ Tambah Siswa Baru</button>
         </div>
-
         <div class="bulk-action-area">
-            <div>
-                <strong>Filter Kelas:</strong>
-                <select id="filter-kelas-siswa" onchange="filterTabelSiswa()" style="width: 150px; margin: 0 10px;">
-                    <option value="">-- Semua --</option>
-                </select>
+            <div><strong>Filter Kelas:</strong>
+                <select id="filter-kelas-siswa" onchange="filterTabelSiswa()" style="width: 150px; margin: 0 10px;"><option value="">-- Semua --</option></select>
             </div>
             <div style="display: flex; align-items: center; gap: 8px;">
                 <input type="checkbox" id="master-checkbox" onclick="toggleSelectAll(this)" style="width: 18px; height: 18px;"> 
-                <label for="master-checkbox">Pilih Semua di Kelas Ini</label>
+                <label for="master-checkbox">Pilih Semua</label>
             </div>
             <div style="margin-left: auto; display: flex; gap: 8px;">
-                <button class="btn btn-sm btn-blue" onclick="bulkUpdateIzin('Ya')">Izinkan Terpilih</button>
-                <button class="btn btn-sm btn-red" onclick="bulkUpdateIzin('Tidak')">Cabut Terpilih</button>
+                <button class="btn btn-sm btn-blue" onclick="bulkUpdateIzin('Ya')">Izinkan</button>
+                <button class="btn btn-sm btn-red" onclick="bulkUpdateIzin('Tidak')">Cabut</button>
             </div>
         </div>
-
         <input type="text" id="cari-siswa" placeholder="Cari Nama atau NIS..." onkeyup="filterTabelSiswa()">
-
         <table id="t-siswa-table">
-            <thead>
-                <tr>
-                    <th width="30px"></th>
-                    <th>NIS</th>
-                    <th>Nama</th>
-                    <th>Kelas</th>
-                    <th>Jurusan</th>
-                    <th>Izin</th>
-                    <th>Aksi</th>
-                </tr>
-            </thead>
+            <thead><tr><th width="30px"></th><th>NIS</th><th>Nama</th><th>Kelas</th><th>Izin</th><th>Aksi</th></tr></thead>
             <tbody id="t-siswa-body"></tbody>
         </table>
     </div>
 
-    <div id="p-soal" class="panel"><h2>Kelola Soal</h2><p>Gunakan menu sub-nav.</p></div>
     <div id="p-nilai" class="panel"><h2>Rekap Nilai</h2><table id="t-nilai"></table></div>
     <div id="p-absen" class="panel"><h2>Absensi Guru</h2><table id="t-absen"></table></div>
 </div>
@@ -114,106 +149,114 @@
         if(id === 'p-nilai') muatTabel('getRekapNilai', 't-nilai');
     }
 
-    // --- LOGIKA MANAJEMEN SISWA ---
+    // --- SOAL LOGIC ---
+    function switchSubSoal(mode) {
+        document.getElementById('sub-soal-input').classList.toggle('hidden', mode !== 'input');
+        document.getElementById('sub-soal-daftar').classList.toggle('hidden', mode !== 'daftar');
+        document.getElementById('btn-sub-input').classList.toggle('active', mode === 'input');
+        document.getElementById('btn-sub-daftar').classList.toggle('active', mode === 'daftar');
+        if(mode === 'daftar') muatDatabaseSoal();
+    }
+
+    async function simpanSoal() {
+        const id = document.getElementById('edit-id').value;
+        const data = {
+            action: id ? "updateSoal" : "inputSoal", id,
+            tingkat: document.getElementById('i-rombel').value || document.getElementById('i-tingkat').value,
+            jurusan: document.getElementById('i-jurusan').value,
+            tipe: document.getElementById('i-tipe').value,
+            pertanyaan: document.getElementById('q-text').value,
+            opsi: [document.getElementById('o1').value, document.getElementById('o2').value, document.getElementById('o3').value, document.getElementById('o4').value],
+            kunci: document.getElementById('q-kunci').value,
+            status: document.getElementById('i-status').value
+        };
+        await fetch(BASE_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
+        alert("Berhasil!"); location.reload();
+    }
+
+    async function muatDatabaseSoal() {
+        const r = await fetch(`${BASE_URL}?action=getDatabaseSoal`);
+        const d = await r.json();
+        document.getElementById('t-database-soal').innerHTML = d.map(v => `
+            <tr><td>${v[0]}</td><td>${v[1]}</td><td>${v[3]}</td><td>${v[4].substring(0,30)}...</td>
+            <td><button class="btn btn-sm btn-orange" onclick='isiFormEdit(${JSON.stringify(v)})'>Edit</button></td></tr>`).join('');
+    }
+
+    function isiFormEdit(v) {
+        switchSubSoal('input');
+        document.getElementById('edit-id').value = v[0];
+        document.getElementById('i-rombel').value = v[1];
+        document.getElementById('q-text').value = v[4];
+        const opsi = JSON.parse(v[5]);
+        document.getElementById('o1').value = opsi[0]; document.getElementById('o2').value = opsi[1];
+        document.getElementById('o3').value = opsi[2]; document.getElementById('o4').value = opsi[3];
+        document.getElementById('q-kunci').value = v[6];
+        document.getElementById('btn-cancel-edit').classList.remove('hidden');
+        toggleOpsi();
+    }
+
+    function toggleOpsi() {
+        const t = document.getElementById('i-tipe').value;
+        document.getElementById('opsi-container').style.display = (t === "IS") ? "none" : "block";
+    }
+
+    function resetFormSoal() {
+        document.getElementById('edit-id').value = "";
+        document.getElementById('q-text').value = "";
+        document.getElementById('btn-cancel-edit').classList.add('hidden');
+    }
+
+    // --- SISWA LOGIC ---
     async function muatTabelSiswa() {
         const r = await fetch(`${BASE_URL}?action=getDataSiswa`);
         const d = await r.json();
         const body = document.getElementById('t-siswa-body');
-        const filterKelas = document.getElementById('filter-kelas-siswa');
-
-        // Update Dropdown Kelas secara dinamis
         const listKelas = [...new Set(d.map(v => v[2]))].sort();
-        filterKelas.innerHTML = '<option value="">-- Semua --</option>' + listKelas.map(k => `<option value="${k}">${k}</option>`).join('');
-
-        body.innerHTML = d.map(v => {
-            const isIzin = (v[4] || "").toString().trim() === "Ya";
-            return `<tr data-kelas="${v[2]}">
-                <td><input type="checkbox" class="check-siswa" value="${v[0]}"></td>
-                <td>${v[0]}</td>
-                <td>${v[1]}</td>
-                <td>${v[2]}</td>
-                <td>${v[3]}</td>
-                <td><span class="badge ${isIzin?'btn-green':'btn-red'}">${v[4]||'Tidak'}</span></td>
-                <td><button class="btn btn-sm ${isIzin?'btn-red':'btn-green'}" onclick="ubahIzinSiswa('${v[0]}','${isIzin?'Tidak':'Ya'}')">${isIzin?'Cabut':'Beri'} Izin</button></td>
-            </tr>`;
-        }).join('');
+        document.getElementById('filter-kelas-siswa').innerHTML = '<option value="">-- Semua --</option>' + listKelas.map(k => `<option value="${k}">${k}</option>`).join('');
+        body.innerHTML = d.map(v => `<tr data-kelas="${v[2]}"><td><input type="checkbox" class="check-siswa" value="${v[0]}"></td><td>${v[0]}</td><td>${v[1]}</td><td>${v[2]}</td><td><span class="badge ${(v[4]||'').trim()==='Ya'?'btn-green':'btn-red'}">${v[4]||'Tidak'}</span></td><td><button class="btn btn-sm" onclick="ubahIzinSiswa('${v[0]}','${(v[4]||'').trim()==='Ya'?'Tidak':'Ya'}')">Toggle</button></td></tr>`).join('');
     }
 
     function filterTabelSiswa() {
         const kls = document.getElementById("filter-kelas-siswa").value.toUpperCase();
         const cari = document.getElementById("cari-siswa").value.toUpperCase();
         const tr = document.getElementById("t-siswa-body").getElementsByTagName("tr");
-
         for (let i = 0; i < tr.length; i++) {
-            const klsRow = tr[i].getAttribute("data-kelas").toUpperCase();
-            const txtRow = tr[i].innerText.toUpperCase();
-            const matchKelas = kls === "" || klsRow === kls;
-            const matchCari = txtRow.includes(cari);
-            tr[i].style.display = (matchKelas && matchCari) ? "" : "none";
+            const match = (kls === "" || tr[i].getAttribute("data-kelas").toUpperCase() === kls) && tr[i].innerText.toUpperCase().includes(cari);
+            tr[i].style.display = match ? "" : "none";
         }
     }
 
     function toggleSelectAll(source) {
-        const checkboxes = document.querySelectorAll('.check-siswa');
-        for (let cb of checkboxes) {
-            // Hanya centang yang tampil (terfilter)
-            if (cb.closest('tr').style.display !== "none") {
-                cb.checked = source.checked;
-            }
-        }
+        document.querySelectorAll('.check-siswa').forEach(cb => { if(cb.closest('tr').style.display !== 'none') cb.checked = source.checked; });
     }
 
     async function bulkUpdateIzin(status) {
         const terpilih = Array.from(document.querySelectorAll('.check-siswa:checked')).map(cb => cb.value);
-        if (terpilih.length === 0) return alert("Pilih siswa dulu Pak!");
-        if (!confirm(`Ubah izin ${terpilih.length} siswa menjadi ${status}?`)) return;
-
-        // Proses beruntun
-        for (let nis of terpilih) {
-            await fetch(BASE_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "updateIzinSiswa", nis, status }) });
-        }
-        alert("Pembaruan masal selesai!");
-        muatTabelSiswa();
-        document.getElementById('master-checkbox').checked = false;
+        if (terpilih.length === 0) return alert("Pilih siswa dulu!");
+        for (let nis of terpilih) await fetch(BASE_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "updateIzinSiswa", nis, status }) });
+        alert("Selesai!"); muatTabelSiswa();
     }
 
     function tambahSiswaDialog() {
-        const nis = prompt("Masukkan NIS:");
-        const nama = prompt("Masukkan Nama Lengkap:");
-        const kelas = prompt("Masukkan Kelas (Contoh: X BP):");
-        const jurusan = prompt("Masukkan Jurusan:");
-
-        if (nis && nama && kelas) {
-            fetch(BASE_URL, { 
-                method: 'POST', 
-                mode: 'no-cors', 
-                body: JSON.stringify({ action: "tambahSiswa", nis, nama, kelas, jurusan }) 
-            }).then(() => {
-                alert("Siswa Berhasil Ditambahkan!");
-                muatTabelSiswa();
-            });
-        }
+        const nis = prompt("NIS:"), nama = prompt("Nama:"), kelas = prompt("Kelas:"), jurusan = prompt("Jurusan:");
+        if (nis && nama && kelas) fetch(BASE_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "tambahSiswa", nis, nama, kelas, jurusan }) }).then(() => muatTabelSiswa());
     }
 
     async function ubahIzinSiswa(nis, status) {
         await fetch(BASE_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "updateIzinSiswa", nis, status }) });
-        setTimeout(muatTabelSiswa, 1200);
+        setTimeout(muatTabelSiswa, 1000);
     }
 
-    // --- LOGIKA DASHBOARD & JADWAL ---
+    // --- JADWAL ---
     async function muatJadwal() {
         const r = await fetch(`${BASE_URL}?action=getPengaturan`);
         const d = await r.json();
-        document.getElementById('t-jadwal').innerHTML = d.map(v => {
-            const isAktif = (v[3] || "").toLowerCase() === "aktif";
-            return `<tr><td>${v[0]}</td><td>${v[1]}</td><td><span class="badge ${isAktif?'btn-green':'btn-red'}">${v[3]}</span></td>
-            <td><button class="btn btn-sm ${isAktif?'btn-red':'btn-green'}" onclick="toggleUjian('${v[0]}', '${isAktif?'Nonaktif':'Aktif'}')">${isAktif?'Matikan':'Aktifkan'}</button></td></tr>`;
-        }).join('');
+        document.getElementById('t-jadwal').innerHTML = d.map(v => `<tr><td>${v[0]}</td><td>${v[1]}</td><td><span class="badge ${v[3].toLowerCase()==='aktif'?'btn-green':'btn-red'}">${v[3]}</span></td><td><button class="btn btn-sm" onclick="toggleUjian('${v[0]}', '${v[3]==='Aktif'?'Nonaktif':'Aktif'}')">Toggle</button></td></tr>`).join('');
     }
 
     async function toggleUjian(mapel, status) {
         await fetch(BASE_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "toggleUjian", mapel, status }) });
-        setTimeout(muatJadwal, 1200);
+        setTimeout(muatJadwal, 1000);
     }
 
     async function muatTabel(act, target) {
