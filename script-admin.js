@@ -1,123 +1,114 @@
+/** * SCRIPT-ADMIN.JS (FINAL SYNC)
+ * Pastikan variabel BASE_URL sudah benar sesuai link Web App Bapak
+ */
 const BASE_URL = "https://script.google.com/macros/s/AKfycbzcfarL2U0IVKCjWYePFOx8GyYvUXXMOzgw05NBg65glTjKDP7A_EGNfmTqADb9xsHb/exec";
 
-// --- 1. NAVIGASI UTAMA ---
+// --- 1. NAVIGASI PANEL ---
 function showPanel(id, el) {
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     document.getElementById(id).classList.add('active');
     if (el) el.classList.add('active');
     
-    // Auto-load data sesuai panel yang dibuka
+    // Trigger muat data otomatis saat menu diklik
     if (id === 'p-dash') muatJadwal();
-    if (id === 'p-soal') muatDatabaseSoal();
+    if (id === 'p-soal') switchSubSoal('input'); // Default ke input, tapi bisa pindah ke daftar
     if (id === 'p-siswa') muatTabelSiswa();
     if (id === 'p-nilai') muatRekapNilai();
 }
 
-// --- 2. DASHBOARD: KONTROL JADWAL ---
-async function muatJadwal() {
-    try {
-        const r = await fetch(`${BASE_URL}?action=getPengaturan`);
-        const d = await r.json();
-        const body = document.getElementById('t-jadwal');
-        body.innerHTML = d.map(v => {
-            const isAktif = (v[3] || '').toLowerCase() === 'aktif';
-            return `<tr>
-                <td>${v[0]}</td>
-                <td>${v[1]}</td>
-                <td><span class="badge ${isAktif ? 'btn-green' : 'btn-red'}">${v[3]}</span></td>
-                <td><button class="btn btn-sm" onclick="toggleUjian('${v[0]}', '${v[1]}', '${isAktif ? 'Nonaktif' : 'Aktif'}')">Toggle</button></td>
-            </tr>`;
-        }).join('');
-    } catch (e) { console.error("Gagal muat jadwal"); }
+// --- 2. KELOLA SOAL (DAFTAR SOAL & TOMBOL AKSI) ---
+function switchSubSoal(mode) {
+    document.getElementById('sub-soal-input').classList.toggle('hidden', mode !== 'input');
+    document.getElementById('sub-soal-daftar').classList.toggle('hidden', mode !== 'daftar');
+    document.getElementById('btn-sub-input').classList.toggle('active', mode === 'input');
+    document.getElementById('btn-sub-daftar').classList.toggle('active', mode === 'daftar');
+    if (mode === 'daftar') muatDatabaseSoal();
 }
 
-async function toggleUjian(mapel, tingkat, status) {
-    await fetch(BASE_URL, { method: 'POST', body: JSON.stringify({ action: "toggleUjian", mapel, tingkat, status }) });
-    muatJadwal();
-}
-
-// --- 3. KELOLA SOAL ---
 async function muatDatabaseSoal() {
+    const body = document.getElementById('t-database-soal');
+    body.innerHTML = "<tr><td colspan='5' style='text-align:center'>Memuat Database Soal...</td></tr>";
+    
     try {
-        const body = document.getElementById('t-database-soal');
-        body.innerHTML = "<tr><td colspan='5'>Memuat...</td></tr>";
         const r = await fetch(`${BASE_URL}?action=getDatabaseSoal`);
         const d = await r.json();
         
-        const listMapel = [...new Set(d.map(v => v[8]).filter(v => v))].sort();
-        document.getElementById('filter-mapel-soal').innerHTML = '<option value="">-- Semua Mapel --</option>' + listMapel.map(m => `<option value="${m}">${m}</option>`).join('');
+        if (d.length === 0) {
+            body.innerHTML = "<tr><td colspan='5' style='text-align:center'>Belum ada soal di database.</td></tr>";
+            return;
+        }
 
         body.innerHTML = d.map(v => `
             <tr data-mapel="${(v[8]||'').toUpperCase()}">
                 <td>${v[0]}</td>
                 <td><strong>${v[8]||'-'}</strong><br><small>${v[1]} | ${v[2]}</small></td>
-                <td>${v[3]}</td>
-                <td>${(v[4]||'').substring(0,40)}...</td>
-                <td><button class="btn btn-red btn-sm" onclick="hapusSoal('${v[0]}')">Hapus</button></td>
+                <td><span class="badge btn-orange">${v[3]}</span></td>
+                <td>${(v[4]||'').toString().substring(0,50)}...</td>
+                <td>
+                    <button class="btn btn-sm btn-blue" onclick="editSoal('${v[0]}')">Edit</button>
+                    <button class="btn btn-sm btn-red" onclick="hapusSoal('${v[0]}')">Hapus</button>
+                </td>
             </tr>`).join('');
-    } catch (e) { body.innerHTML = "<tr><td colspan='5'>Gagal muat data.</td></tr>"; }
+    } catch (e) {
+        body.innerHTML = "<tr><td colspan='5' style='text-align:center; color:red;'>Gagal mengambil data soal.</td></tr>";
+    }
 }
 
-// --- 4. DATA SISWA (INI YANG TADI KETINGGALAN) ---
+// --- 3. DATA SISWA (PENYEBAB KOSONG) ---
 async function muatTabelSiswa() {
+    const body = document.getElementById('t-siswa-body');
+    body.innerHTML = "<tr><td colspan='6' style='text-align:center'>Sedang menarik data siswa...</td></tr>";
+    
     try {
-        const body = document.getElementById('t-siswa-body');
-        body.innerHTML = "<tr><td colspan='6'>Memuat data siswa...</td></tr>";
-        
         const r = await fetch(`${BASE_URL}?action=getDataSiswa`);
         const d = await r.json();
         
+        // Update Filter Kelas
         const listKelas = [...new Set(d.map(v => v[2]))].sort();
-        document.getElementById('filter-kelas-siswa').innerHTML = '<option value="">-- Semua Kelas --</option>' + listKelas.map(k => `<option value="${k}">${k}</option>`).join('');
+        const selectFilter = document.getElementById('filter-kelas-siswa');
+        if(selectFilter) {
+            selectFilter.innerHTML = '<option value="">-- Semua Kelas --</option>' + 
+            listKelas.map(k => `<option value="${k}">${k}</option>`).join('');
+        }
 
         body.innerHTML = d.map(v => {
             const isIzin = (v[4] || '').trim().toUpperCase() === 'YA';
             return `<tr data-kelas="${v[2]}">
                 <td><input type="checkbox" class="check-siswa" value="${v[0]}"></td>
-                <td>${v[0]}</td><td>${v[1]}</td><td>${v[2]}</td>
-                <td><span class="badge ${isIzin ? 'btn-green' : 'btn-red'}">${isIzin ? 'Izin' : 'Blokir'}</span></td>
-                <td><button class="btn btn-sm" onclick="ubahIzinSiswa('${v[0]}','${isIzin ? 'Tidak' : 'Ya'}')">Set Izin</button></td>
+                <td>${v[0]}</td>
+                <td>${v[1]}</td>
+                <td>${v[2]}</td>
+                <td><span class="badge ${isIzin ? 'btn-green' : 'btn-red'}">${isIzin ? 'IZIN' : 'BLOKIR'}</span></td>
+                <td>
+                    <button class="btn btn-sm ${isIzin ? 'btn-red' : 'btn-green'}" 
+                    onclick="ubahIzinSiswa('${v[0]}','${isIzin ? 'Tidak' : 'Ya'}')">
+                    ${isIzin ? 'Blokir' : 'Izinkan'}
+                    </button>
+                </td>
             </tr>`;
         }).join('');
-    } catch (e) { console.log("Gagal muat siswa"); }
+    } catch (e) {
+        body.innerHTML = "<tr><td colspan='6' style='text-align:center; color:red;'>Gagal memuat data siswa. Cek koneksi atau Apps Script.</td></tr>";
+    }
+}
+
+// --- 4. FUNGSI AKSI (HAPUS & IZIN) ---
+async function hapusSoal(id) {
+    if(!confirm(`Yakin ingin menghapus soal ID: ${id}?`)) return;
+    try {
+        await fetch(BASE_URL, { method: 'POST', body: JSON.stringify({ action: "hapusSoal", id: id }) });
+        alert("Soal berhasil dihapus!");
+        muatDatabaseSoal();
+    } catch (e) { alert("Gagal menghapus."); }
 }
 
 async function ubahIzinSiswa(nis, status) {
-    await fetch(BASE_URL, { method: 'POST', body: JSON.stringify({ action: "updateIzinSiswa", nis, status }) });
-    muatTabelSiswa();
-}
-
-// --- 5. REKAP NILAI ---
-async function muatRekapNilai() {
     try {
-        const r = await fetch(`${BASE_URL}?action=getRekapNilai`);
-        const d = await r.json();
-        const target = document.getElementById('t-nilai');
-        if(d.length === 0) { target.innerHTML = "<tr><td>Belum ada data nilai.</td></tr>"; return; }
-        
-        let html = "<thead><tr><th>Waktu</th><th>Nama</th><th>Kelas</th><th>Nilai</th></tr></thead><tbody>";
-        html += d.map(v => `<tr><td>${v[0]}</td><td>${v[1]}</td><td>${v[2]}</td><td>${v[5]}</td></tr>`).join('');
-        target.innerHTML = html + "</tbody>";
-    } catch (e) { console.log("Gagal muat nilai"); }
+        await fetch(BASE_URL, { method: 'POST', body: JSON.stringify({ action: "updateIzinSiswa", nis: nis, status: status }) });
+        muatTabelSiswa();
+    } catch (e) { alert("Gagal merubah status izin."); }
 }
 
-// --- FUNGSI SEARCH & FILTER ---
-function filterTabelSiswa() {
-    const kls = document.getElementById("filter-kelas-siswa").value.toUpperCase();
-    const cari = document.getElementById("cari-siswa").value.toUpperCase();
-    document.querySelectorAll("#t-siswa-body tr").forEach(row => {
-        const match = (kls === "" || row.getAttribute("data-kelas").toUpperCase() === kls) && row.innerText.toUpperCase().includes(cari);
-        row.style.display = match ? "" : "none";
-    });
-}
-
-function filterTabelSoal() {
-    const mapel = document.getElementById("filter-mapel-soal").value.toUpperCase();
-    document.querySelectorAll("#t-database-soal tr").forEach(row => {
-        const match = (mapel === "" || row.getAttribute("data-mapel").includes(mapel));
-        row.style.display = match ? "" : "none";
-    });
-}
-
-window.onload = muatJadwal;
+// Jalankan jadwal saat pertama kali load
+window.onload = () => { muatJadwal(); };
