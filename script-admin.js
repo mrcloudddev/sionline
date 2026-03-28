@@ -4,7 +4,7 @@
  * Fitur: Dashboard, Multi-Jurusan Soal, Bulk Izin Siswa, & Rekap Nilai
  */
 
-const BASE_URL = "https://script.google.com/macros/s/AKfycbzpMAzLDu_akdHpvOUTsxcvcyJ_unF7f7o8j_UoKqQ7EI4RrBLSsuogK2yJxoGigbE6/exec";
+const BASE_URL = "https://script.google.com/macros/s/AKfycbziyp_26MYHWnb3QjPdfLfwqb2eubenuzaEu1SLgQ2eHKEZiD1Z1JgsXVg0m6o-mAWR/exec";
 
 // --- 1. NAVIGASI & AUTO-LOAD ---
 function showPanel(id, el) {
