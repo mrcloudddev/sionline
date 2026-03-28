@@ -1,19 +1,18 @@
 /**
- * SISTEM ADMIN SMK MANDIRI - LOGIKA FINAL (V.9.0)
+ * SISTEM ADMIN SMK MANDIRI - LOGIKA FINAL (V.10.0)
  * Developer: Pak Dwi Frediawan
- * Fitur: CRUD Soal (Input/Edit/Hapus), Dashboard, Bulk Izin Siswa, & Rekap Nilai
+ * Fitur: CRUD Soal (Input & Edit Terintegrasi), Dashboard Jadwal, Bulk Izin Siswa, & Rekap Nilai
  */
 
-const BASE_URL = "https://script.google.com/macros/s/AKfycbyaCdUx42X8ZitcIuFGaDxt2PmtIHYxf6FoTk6BJ37cU4zK8znApiyvB5CrAOoDSecl/exec";
+const BASE_URL = "https://script.google.com/macros/s/AKfycbxdvx3Bip51SZT6auEkBMZj1kbg2YD3geYzFEwZ0KelJ8Zx0tH8oV6uh2E2JGuV3jAD/exec";
 
-// --- 1. NAVIGASI & AUTO-LOAD ---
+// --- 1. NAVIGASI PANEL ---
 function showPanel(id, el) {
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     document.getElementById(id).classList.add('active');
     if (el) el.classList.add('active');
     
-    // Auto-load data saat panel dibuka
     if (id === 'p-dash') muatJadwal();
     if (id === 'p-soal') muatDatabaseSoal();
     if (id === 'p-siswa') muatTabelSiswa();
@@ -24,7 +23,7 @@ function showPanel(id, el) {
 async function muatJadwal() {
     const body = document.getElementById('t-jadwal');
     if(!body) return;
-    body.innerHTML = "<tr><td colspan='4' style='text-align:center'>Memuat jadwal...</td></tr>";
+    body.innerHTML = "<tr><td colspan='4' style='text-align:center'>Memuat jadwal ujian...</td></tr>";
     
     try {
         const r = await fetch(`${BASE_URL}?action=getPengaturan&t=${new Date().getTime()}`);
@@ -42,7 +41,7 @@ async function muatJadwal() {
                 </td>
             </tr>`;
         }).join('');
-    } catch (e) { body.innerHTML = "<tr><td colspan='4'>Gagal muat jadwal.</td></tr>"; }
+    } catch (e) { body.innerHTML = "<tr><td colspan='4' style='text-align:center'>Gagal muat jadwal.</td></tr>"; }
 }
 
 async function toggleUjian(mapel, tingkat, status) {
@@ -55,7 +54,7 @@ async function toggleUjian(mapel, tingkat, status) {
     } catch (e) { alert("Gagal update status."); }
 }
 
-// --- 3. KELOLA SOAL (INPUT, EDIT, DAFTAR) ---
+// --- 3. KELOLA SOAL (INPUT & DAFTAR) ---
 function switchSubSoal(mode) {
     document.getElementById('sub-soal-input').classList.toggle('hidden', mode !== 'input');
     document.getElementById('sub-soal-daftar').classList.toggle('hidden', mode !== 'daftar');
@@ -64,17 +63,19 @@ function switchSubSoal(mode) {
     if (mode === 'daftar') muatDatabaseSoal();
 }
 
-// FUNGSI SIMPAN (UNTUK BARU & EDIT)
+// FUNGSI SIMPAN: MENDETEKSI INPUT BARU ATAU UPDATE
 async function simpanSoal() {
     const btn = document.querySelector('button[onclick="simpanSoal()"]');
-    if(btn) { btn.innerText = "Menyimpan..."; btn.disabled = true; }
+    const idSoal = document.getElementById('edit-id').value;
+    
+    if(btn) { btn.innerText = "Sedang Menyimpan..."; btn.disabled = true; }
 
     const selectJurusan = document.getElementById('i-jurusan');
     const pilihanJurusan = Array.from(selectJurusan.selectedOptions).map(opt => opt.value).join(', ');
 
     const data = {
-        action: document.getElementById('edit-id').value ? "updateSoal" : "inputSoal",
-        id: document.getElementById('edit-id').value,
+        action: idSoal ? "updateSoal" : "inputSoal",
+        id: idSoal,
         tingkat: document.getElementById('i-rombel').value || document.getElementById('i-tingkat').value,
         jurusan: pilihanJurusan,
         mapel: document.getElementById('i-mapel-nama').value,
@@ -91,17 +92,18 @@ async function simpanSoal() {
     };
 
     try {
-        const resp = await fetch(BASE_URL, { method: 'POST', body: JSON.stringify(data) });
-        alert("Data Berhasil Diproses!");
+        await fetch(BASE_URL, { method: 'POST', body: JSON.stringify(data) });
+        alert(idSoal ? "Soal Berhasil Diperbarui!" : "Soal Baru Berhasil Ditambahkan!");
         location.reload();
     } catch (e) {
-        alert("Gagal Simpan.");
+        alert("Gagal memproses data.");
         if(btn) { btn.innerText = "Simpan Soal"; btn.disabled = false; }
     }
 }
 
 async function muatDatabaseSoal() {
     const body = document.getElementById('t-database-soal');
+    if(!body) return;
     try {
         const r = await fetch(`${BASE_URL}?action=getDatabaseSoal`);
         const d = await r.json();
@@ -135,21 +137,19 @@ function isiFormEdit(v) {
     document.getElementById('i-status').value = v[7];
     document.getElementById('i-tipe').value = v[3];
     
-    // Pilih Multiple Jurusan
     const jurArray = v[2].split(',').map(s => s.trim());
     const selectJur = document.getElementById('i-jurusan');
     Array.from(selectJur.options).forEach(opt => {
         opt.selected = jurArray.includes(opt.value);
     });
 
-    // Opsi Jawaban
     try {
         const opsi = JSON.parse(v[5]);
         document.getElementById('o1').value = opsi[0] || '';
         document.getElementById('o2').value = opsi[1] || '';
         document.getElementById('o3').value = opsi[2] || '';
         document.getElementById('o4').value = opsi[3] || '';
-    } catch(e) { console.log("Format Opsi Bukan JSON"); }
+    } catch(e) { console.log("Opsi bukan format JSON"); }
 
     document.getElementById('form-title').innerText = "Edit Soal: " + v[0];
     document.getElementById('btn-cancel-edit').classList.remove('hidden');
@@ -165,7 +165,7 @@ function resetFormSoal() {
 }
 
 async function hapusSoal(id) {
-    if(!confirm("Hapus soal ini?")) return;
+    if(!confirm("Yakin ingin menghapus soal " + id + "?")) return;
     await fetch(BASE_URL, { method: 'POST', body: JSON.stringify({ action: "hapusSoal", id }) });
     muatDatabaseSoal();
 }
@@ -221,7 +221,7 @@ async function bulkUpdateIzin(status) {
     for(let nis of terpilih) {
         await fetch(BASE_URL, { method: 'POST', body: JSON.stringify({ action: "updateIzinSiswa", nis, status }) });
     }
-    alert("Berhasil!"); muatTabelSiswa();
+    alert("Berhasil diperbarui!"); muatTabelSiswa();
 }
 
 function filterTabelSiswa() {
@@ -238,7 +238,7 @@ function filterTabelSiswa() {
 async function muatRekapNilai() {
     const body = document.getElementById('t-nilai');
     if(!body) return;
-    body.innerHTML = "<tr><td colspan='5' style='text-align:center'>Memuat hasil...</td></tr>";
+    body.innerHTML = "<tr><td colspan='5' style='text-align:center'>Memuat hasil rekap...</td></tr>";
     try {
         const r = await fetch(`${BASE_URL}?action=getRekapNilai`);
         const d = await r.json();
@@ -247,10 +247,10 @@ async function muatRekapNilai() {
                 <td>${v[0] ? new Date(v[0]).toLocaleString('id-ID') : '-'}</td>
                 <td>${v[1]}</td><td>${v[2]}</td><td>${v[4]}</td><td><strong>${v[5]}</strong></td>
             </tr>`).join('');
-    } catch (e) { body.innerHTML = "<tr><td colspan='5'>Belum ada hasil.</td></tr>"; }
+    } catch (e) { body.innerHTML = "<tr><td colspan='5'>Belum ada hasil yang masuk.</td></tr>"; }
 }
 
-// --- HELPER ---
+// --- HELPER LAINNYA ---
 function toggleOpsi() {
     const tipe = document.getElementById('i-tipe').value;
     document.getElementById('opsi-container').style.display = (tipe === "IS" || tipe === "ES") ? "none" : "block";
