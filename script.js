@@ -1,5 +1,5 @@
 /**
- * SISTEM UJIAN ONLINE SMK - CLIENT SIDE (STABIL V.5.0)
+ * SISTEM UJIAN ONLINE SMK - CLIENT SIDE (STABIL V.5.0 FINAL)
  * Developer: Pak Dwi Frediawan
  * Fitur: Auto-Save, Anti-Refresh Timer, Auto-Mapel Display, & Radar Sync
  */
@@ -55,7 +55,7 @@ async function cekStatusDanLoadSoal(kelas, jurusan) {
         const res = await resp.json();
         
         if(res.status === "Aktif") {
-            // MUNCULKAN NAMA MAPEL DI HEADER HTML
+            // MUNCULKAN NAMA MAPEL DI HEADER (Jika elemen ada di index.html)
             const badgeMapel = document.getElementById('mapel-aktif');
             if(badgeMapel) badgeMapel.innerText = res.mapelAktif || "Ujian Berlangsung";
 
@@ -83,28 +83,37 @@ async function cekStatusDanLoadSoal(kelas, jurusan) {
 // --- 3. RENDER SOAL & AUTO-SAVE JAWABAN ---
 function renderSoal(soal) {
     const cont = document.getElementById('question-container');
+    
+    // CEK JIKA SOAL KOSONG
     if(!soal || soal.length === 0) {
-        cont.innerHTML = "<p style='text-align:center; padding:20px;'>Belum ada soal tersedia untuk rombel Anda.</p>";
+        cont.innerHTML = `
+            <div style="text-align:center; padding:50px; background:white; border-radius:10px; margin:20px 0;">
+                <h3 style="color:#e74c3c;">SOAL BELUM TERSEDIA</h3>
+                <p>Belum ada soal aktif untuk Rombel: <strong>${dataSiswaAktif.kelas}</strong></p>
+                <p style="font-size:13px; color:#7f8c8d;">Pastikan Admin sudah mengaktifkan jadwal yang sesuai.</p>
+            </div>`;
         return;
     }
 
     const savedAnswers = JSON.parse(localStorage.getItem("jawaban_lokal") || "{}");
 
     cont.innerHTML = soal.map((s, i) => {
-        // Support gambar dalam pertanyaan
-        let qText = s.pertanyaan.replace(/\[IMG\](.*?)\[\/IMG\]/g, '<img src="$1" class="img-soal">');
+        // Support gambar dalam pertanyaan [IMG]url[/IMG]
+        let qText = s.pertanyaan.replace(/\[IMG\](.*?)\[\/IMG\]/g, '<img src="$1" style="max-width:100%; height:auto; display:block; margin:10px 0; border-radius:5px;">');
         
         return `
-        <div class="soal-item" data-id="${s.id}" data-mapel="${s.mapel}">
-            <p><strong>${i+1}.</strong> ${qText}</p>
-            ${s.opsi.map(o => {
-                let isChecked = savedAnswers[s.id] === o ? "checked" : "";
-                return `
-                <label class="option-label">
-                    <input type="radio" name="q${s.id}" value="${o}" ${isChecked} onchange="simpanJawabanLokal('${s.id}', '${o}')"> 
-                    <span>${o}</span>
-                </label>`;
-            }).join('')}
+        <div class="soal-item" data-id="${s.id}" data-mapel="${s.mapel}" style="background:white; padding:20px; margin-bottom:15px; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.05);">
+            <p style="font-size:16px; line-height:1.6; margin-bottom:15px;"><strong>${i+1}.</strong> ${qText}</p>
+            <div class="options-group">
+                ${s.opsi.map(o => {
+                    let isChecked = savedAnswers[s.id] === o ? "checked" : "";
+                    return `
+                    <label style="display:flex; align-items:center; padding:12px; margin-bottom:8px; background:#f8f9fa; border:1px solid #ddd; border-radius:6px; cursor:pointer;">
+                        <input type="radio" name="q${s.id}" value="${o}" ${isChecked} onchange="simpanJawabanLokal('${s.id}', '${o}')" style="width:18px; height:18px;"> 
+                        <span style="margin-left:12px; font-size:15px;">${o}</span>
+                    </label>`;
+                }).join('')}
+            </div>
         </div>`;
     }).join('');
 }
@@ -125,6 +134,7 @@ function mulaiTimer(durasiMenit, sisaDetikManual) {
         if (sisaDetik <= 0) {
             clearInterval(timerInterval);
             document.getElementById('timer').innerText = "00:00";
+            localStorage.removeItem("sisa_waktu");
             submitJawaban(true); // Auto-submit jika waktu habis
             return;
         }
@@ -139,11 +149,11 @@ function mulaiTimer(durasiMenit, sisaDetikManual) {
 
 // --- 5. SUBMIT JAWABAN (FIXED) ---
 async function submitJawaban(auto = false) {
-    if(!auto && !confirm("Kirim jawaban sekarang?")) return;
+    if(!auto && !confirm("Akhiri ujian dan kirim jawaban sekarang?")) return;
     
     clearInterval(timerInterval);
     const btn = document.querySelector('.btn-submit');
-    if(btn) { btn.innerText = "Mengirim..."; btn.disabled = true; }
+    if(btn) { btn.innerText = "Sedang Mengirim..."; btn.disabled = true; }
 
     const kumpulanSoal = document.querySelectorAll('.soal-item');
     const mapelSiswa = kumpulanSoal.length > 0 ? kumpulanSoal[0].dataset.mapel : (document.getElementById('mapel-aktif').innerText || "-");
@@ -166,13 +176,13 @@ async function submitJawaban(auto = false) {
         
         const hasil = await response.json();
         if(hasil.status === "Sukses") {
-            alert("Jawaban Berhasil Terkirim!"); 
+            alert("BERHASIL! Jawaban Anda sudah tersimpan di server."); 
             bersihkanMemori();
         } else {
             throw new Error();
         }
     } catch(e) { 
-        alert("Gagal Kirim! Koneksi internet bermasalah. Klik Kirim lagi."); 
+        alert("GAGAL MENGIRIM! Koneksi internet terputus. Jangan tutup halaman ini, silakan klik tombol Kirim Ulang."); 
         if(btn) { btn.innerText = "Kirim Ulang Jawaban"; btn.disabled = false; }
     }
 }
