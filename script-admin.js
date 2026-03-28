@@ -1,4 +1,4 @@
-const BASE_URL = "https://script.google.com/macros/s/AKfycbzcfarL2U0IVKCjWYePFOx8GyYvUXXMOzgw05NBg65glTjKDP7A_EGNfmTqADb9xsHb/exec";
+const BASE_URL = "https://script.google.com/macros/s/AKfycbzJjzcabybh5kvVOCqDGUQ-wquEiWKuAWg3fB03U5dRm2UgusWjUsduITWIlgBrMiny/exec";
 
 // 1. FUNGSI NAVIGASI (Agar panel bisa ganti-ganti)
 function showPanel(id, el) {
