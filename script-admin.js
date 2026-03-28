@@ -4,7 +4,7 @@
  * Fitur: CRUD Soal (Input & Edit Terintegrasi), Dashboard Jadwal, Bulk Izin Siswa, & Rekap Nilai
  */
 
-const BASE_URL = "https://script.google.com/macros/s/AKfycbxdvx3Bip51SZT6auEkBMZj1kbg2YD3geYzFEwZ0KelJ8Zx0tH8oV6uh2E2JGuV3jAD/exec";
+const BASE_URL = "https://script.google.com/macros/s/AKfycbxDOm3-3Nktw-a3azNbW5leLOJDhd_A1A3x2z6Faah4-XotNuV7tAeD2iG9jKH4eFiG/exec";
 
 // --- 1. NAVIGASI PANEL ---
 function showPanel(id, el) {
