@@ -5,7 +5,7 @@
  */
 
 // GANTI LINK DI BAWAH INI DENGAN LINK DEPLOYMENT APPS SCRIPT TERBARU (NEW VERSION)
-const BASE_URL = "https://script.google.com/macros/s/AKfycbyaCdUx42X8ZitcIuFGaDxt2PmtIHYxf6FoTk6BJ37cU4zK8znApiyvB5CrAOoDSecl/exec";
+const BASE_URL = "https://script.google.com/macros/s/AKfycbxdvx3Bip51SZT6auEkBMZj1kbg2YD3geYzFEwZ0KelJ8Zx0tH8oV6uh2E2JGuV3jAD/exec";
 
 let dataSiswaAktif = {};
 let timerInterval;
