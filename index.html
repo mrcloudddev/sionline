@@ -24,6 +24,21 @@
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             z-index: 99999; text-align: center; font-family: 'Segoe UI', sans-serif;
         }
+
+        /* Tambahan Style Header agar Rapi */
+        header { 
+            background: #1a2a6c; color: white; padding: 15px; 
+            display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        .info-siswa { display: flex; flex-direction: column; }
+        .nama { font-weight: bold; font-size: 16px; }
+        .mapel-badge { 
+            background: #f39c12; color: #000; padding: 2px 8px; 
+            border-radius: 4px; font-size: 12px; font-weight: bold; margin-top: 5px;
+            display: inline-block; width: fit-content;
+        }
+        #timer { font-size: 24px; font-weight: bold; color: #f1c40f; }
     </style>
 </head>
 <body>
@@ -40,9 +55,10 @@
         <header>
             <div class="info-siswa">
                 <span id="nama-siswa" class="nama">Nama Siswa</span>
-                <span id="kelas-siswa" style="font-size: 12px; opacity: 0.8;">Kelas | Jurusan</span>
+                <span id="kelas-siswa" style="font-size: 11px; opacity: 0.8;">Kelas | Jurusan</span>
+                <div id="mapel-aktif" class="mapel-badge">Memuat Mapel...</div>
             </div>
-            <div id="timer">00:00:00</div>
+            <div id="timer">00:00</div>
         </header>
 
         <div id="question-container">
@@ -58,75 +74,55 @@
     <script>
         var lastVersion = 0;
 
-async function cekPerubahanSoal() {
-    if (typeof BASE_URL === 'undefined' || !BASE_URL) return;
+        async function cekPerubahanSoal() {
+            if (typeof BASE_URL === 'undefined' || !BASE_URL) return;
 
-    // 1. Ambil data login untuk tahu NIS siswa ini
-    const savedSesi = localStorage.getItem("sesi_siswa");
-    if(!savedSesi) return;
-    const user = JSON.parse(savedSesi);
-    const nisSiswa = user.nis || document.getElementById('username').value;
+            const savedSesi = localStorage.getItem("sesi_siswa");
+            if(!savedSesi) return;
+            const user = JSON.parse(savedSesi);
+            const nisSiswa = user.nis;
 
-    try {
-        // 2. Kirim NIS ke server agar server cek status izin TERBARU
-        const resp = await fetch(`${BASE_URL}?action=checkUpdate&nis=${nisSiswa}&t=${new Date().getTime()}`);
-        const data = await resp.json();
-        
-        // --- FITUR EKSEKUSI CEKAL ---
-        if (data.izin === "Tidak" || data.izin === "tidak") {
-            console.log("Akses dicabut oleh Admin!");
-            alert("MAAF: Akses ujian Anda telah dicabut oleh Admin/Guru. Silakan hubungi pengawas.");
-            
-            // Hapus semua jejak pengerjaan
-            localStorage.removeItem("sesi_siswa");
-            localStorage.removeItem("jawaban_lokal");
-            localStorage.removeItem("sisa_waktu");
-            
-            // Paksa kembali ke halaman login
-            location.reload(); 
-            return;
+            try {
+                // Tambahkan random param agar tidak kena cache browser
+                const resp = await fetch(`${BASE_URL}?action=checkUpdate&nis=${nisSiswa}&t=${new Date().getTime()}`);
+                const data = await resp.json();
+                
+                // 1. CEK IZIN (EKSEKUSI CEKAL)
+                if (data.izin === "Tidak" || data.izin === "tidak") {
+                    alert("MAAF: Akses ujian Anda telah dicabut oleh Admin. Silakan hubungi pengawas.");
+                    localStorage.clear();
+                    location.reload(); 
+                    return;
+                }
+
+                // 2. CEK UPDATE SOAL (RADAR)
+                let serverVersion = data.lastUpdate || 1;
+                if (lastVersion === 0) {
+                    lastVersion = serverVersion;
+                    return;
+                }
+
+                if (serverVersion > lastVersion) {
+                    tampilkanLoadingUpdate();
+                }
+            } catch (e) { console.log("Radar offline."); }
         }
-
-        // --- FITUR UPDATE SOAL (RADAR BIASA) ---
-        let serverVersion = data.lastUpdate || 1;
-        if (lastVersion === 0) {
-            lastVersion = serverVersion;
-            return;
-        }
-
-        if (serverVersion > lastVersion) {
-            tampilkanLoadingUpdate();
-        }
-    } catch (e) { 
-        console.log("Radar: Gagal cek status."); 
-    }
-}
 
         function tampilkanLoadingUpdate() {
-            // Mencegah overlay muncul ganda
             if (document.getElementById('update-overlay')) return;
-
             const overlay = document.createElement('div');
             overlay.id = 'update-overlay';
             overlay.innerHTML = `
                 <div class="loader"></div>
                 <h2 style="margin-top:20px;">PEMBARUAN DATA...</h2>
-                <p style="padding: 0 20px; opacity: 0.8;">Admin baru saja melakukan perbaikan soal.<br>Jawaban Anda tersimpan, halaman akan memuat ulang.</p>
+                <p style="padding: 0 20px; opacity: 0.8;">Admin melakukan perbaikan data.<br>Jawaban Anda aman, halaman dimuat ulang.</p>
             `;
             document.body.appendChild(overlay);
-            
-            // Beri jeda 2.5 detik agar siswa bisa baca pesan sebelum reload
-            setTimeout(() => {
-                location.reload();
-            }, 2500);
+            setTimeout(() => { location.reload(); }, 2500);
         }
 
-        // Jalankan radar pertama kali setelah 5 detik agar script.js siap sepenuhnya
-        setTimeout(() => {
-            cekPerubahanSoal();
-            // Interval pengecekan setiap 30 detik
-            setInterval(cekPerubahanSoal, 30000);
-        }, 5000);
+        // Interval radar setiap 30 detik
+        setInterval(cekPerubahanSoal, 30000);
     </script>
 
 </body>
