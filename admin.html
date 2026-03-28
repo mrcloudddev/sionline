@@ -18,9 +18,9 @@
         .sub-nav { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 15px; }
         .btn-sub { padding: 8px 15px; border-radius: 5px; border: 1px solid #ddd; cursor: pointer; background: white; font-weight: 600; }
         .btn-sub.active { background: var(--blue); color: white; border-color: var(--blue); }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; }
         th, td { border: 1px solid #eee; padding: 10px; text-align: left; font-size: 13px; }
-        th { background: #f8f9fa; }
+        th { background: #f8f9fa; font-weight: bold; color: #333; }
         input, select, textarea { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; }
         .btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; }
         .btn-blue { background: var(--blue); } .btn-red { background: var(--red); } .btn-green { background: var(--green); } .btn-orange { background: var(--orange); }
@@ -28,6 +28,9 @@
         .hidden { display: none; }
         .badge { padding: 4px 8px; border-radius: 4px; color: white; font-size: 11px; font-weight: bold; }
         .bulk-action-area { background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+        small { color: #7f8c8d; }
+        /* Style khusus untuk select multiple */
+        select[multiple] { height: 80px; }
     </style>
 </head>
 <body>
@@ -43,8 +46,9 @@
 <div id="main">
     <div id="p-dash" class="panel active">
         <h2>Kontrol Jadwal Ujian</h2>
+        <p><small>Klik tombol ON/OFF untuk membuka atau menutup akses ujian siswa.</small></p>
         <table>
-            <thead><tr><th>Mata Pelajaran</th><th>Rombel</th><th>Status</th><th>Aksi</th></tr></thead>
+            <thead><tr><th>Mata Pelajaran</th><th>Rombel / Tingkat</th><th>Status</th><th>Aksi</th></tr></thead>
             <tbody id="t-jadwal"></tbody>
         </table>
     </div>
@@ -66,11 +70,12 @@
                 <div><label>Tingkatan:</label>
                     <select id="i-tingkat"><option>X</option><option>XI</option><option>XII</option></select>
                 </div>
-                <div><label>Target Jurusan:</label>
-                    <select id="i-jurusan">
-                        <option value="Umum">Umum (Semua Jurusan)</option>
+                <div><label>Target Jurusan (Bisa Pilih > 1):</label>
+                    <select id="i-jurusan" multiple title="Tahan tombol Ctrl (Windows) / Command (Mac) untuk memilih lebih dari satu">
+                        <option value="Umum">Umum (Semua)</option>
                         <option value="Broadcasting">Broadcasting</option>
                         <option value="Teknik Sepeda Motor">Teknik Sepeda Motor</option>
+                        <option value="Akuntansi">Akuntansi</option>
                     </select>
                 </div>
                 <div><label>Tipe Soal:</label>
@@ -83,19 +88,26 @@
                 </div>
             </div>
 
-            <input type="text" id="i-rombel" placeholder="Rombel Spesifik (Contoh: X BP)">
-            <textarea id="q-text" rows="4" placeholder="Ketik Pertanyaan di sini..."></textarea>
+            <label>Rombel Spesifik (Opsional):</label>
+            <input type="text" id="i-rombel" placeholder="Contoh: X BP (Kosongkan jika untuk satu angkatan)">
+            
+            <label>Pertanyaan:</label>
+            <textarea id="q-text" rows="4" placeholder="Gunakan [IMG]url_gambar[/IMG] untuk menyisipkan gambar"></textarea>
             
             <div id="opsi-container">
-                <label>Opsi Jawaban:</label>
+                <label>Opsi Jawaban (A, B, C, D):</label>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                     <input id="o1" placeholder="Opsi A"><input id="o2" placeholder="Opsi B">
                     <input id="o3" placeholder="Opsi C"><input id="o4" placeholder="Opsi D">
                 </div>
             </div>
             
-            <input id="q-kunci" placeholder="Kunci Jawaban">
+            <label>Kunci Jawaban:</label>
+            <input id="q-kunci" placeholder="Contoh: A (atau jawaban singkat jika Isian)">
+            
+            <label>Status Soal:</label>
             <select id="i-status"><option value="aktif">Aktif</option><option value="nonaktif">Nonaktif</option></select>
+            
             <button class="btn btn-blue" style="width:100%" onclick="simpanSoal()">Simpan Soal</button>
             <button class="btn btn-red hidden" id="btn-cancel-edit" onclick="resetFormSoal()" style="width:100%; margin-top:5px">Batal Edit</button>
         </div>
@@ -104,7 +116,7 @@
             <div class="bulk-action-area">
                 <strong>Filter Mapel:</strong>
                 <select id="filter-mapel-soal" onchange="filterTabelSoal()" style="width: 250px; margin: 0;">
-                    <option value="">-- Memuat Mapel... --</option>
+                    <option value="">-- Semua Mapel --</option>
                 </select>
                 <input type="text" id="cari-soal-teks" placeholder="Cari teks soal..." onkeyup="filterTabelSoal()" style="flex: 1; margin: 0;">
             </div>
@@ -121,21 +133,33 @@
             <button class="btn btn-green" onclick="tambahSiswaDialog()">+ Tambah Siswa</button>
         </div>
         <div class="bulk-action-area">
-            <select id="filter-kelas-siswa" onchange="filterTabelSiswa()" style="width:150px; margin:0"><option value="">-- Semua Kelas --</option></select>
-            <label><input type="checkbox" id="master-checkbox" onclick="toggleSelectAll(this)"> Pilih Semua</label>
-            <button class="btn btn-sm btn-blue" onclick="bulkUpdateIzin('Ya')">Izinkan</button>
-            <button class="btn btn-sm btn-red" onclick="bulkUpdateIzin('Tidak')">Cabut Izin</button>
+            <strong>Filter Kelas:</strong>
+            <select id="filter-kelas-siswa" onchange="filterTabelSiswa()" style="width:180px; margin:0">
+                <option value="">-- Memuat Kelas... --</option>
+            </select>
+            <div style="margin-left: auto; display: flex; align-items: center; gap: 10px;">
+                <label><input type="checkbox" id="master-checkbox" onclick="toggleSelectAll(this)"> <strong>Pilih Semua</strong></label>
+                <button class="btn btn-sm btn-blue" onclick="bulkUpdateIzin('Ya')">Beri Izin</button>
+                <button class="btn btn-sm btn-red" onclick="bulkUpdateIzin('Tidak')">Cabut Izin</button>
+            </div>
         </div>
-        <input type="text" id="cari-siswa" placeholder="Cari nama atau NIS..." onkeyup="filterTabelSiswa()">
+        <input type="text" id="cari-siswa" placeholder="Cari nama atau NIS siswa..." onkeyup="filterTabelSiswa()">
         <table>
-            <thead><tr><th width="30px"></th><th>NIS</th><th>Nama</th><th>Kelas</th><th>Izin</th><th>Aksi</th></tr></thead>
+            <thead><tr><th width="40px">Pilih</th><th>NIS</th><th>Nama</th><th>Kelas</th><th>Status Izin</th><th>Aksi</th></tr></thead>
             <tbody id="t-siswa-body"></tbody>
         </table>
     </div>
 
     <div id="p-nilai" class="panel">
         <h2>Rekap Hasil Ujian</h2>
-        <table id="t-nilai"></table>
+        <div class="bulk-action-area">
+            <button class="btn btn-sm btn-green" onclick="muatRekapNilai()">🔄 Refresh Data</button>
+            <p><small>* Data diambil langsung dari sheet Hasil_Ujian</small></p>
+        </div>
+        <table>
+            <thead><tr><th>Waktu</th><th>Nama</th><th>Kelas</th><th>Mapel</th><th>Nilai</th></tr></thead>
+            <tbody id="t-nilai"></tbody>
+        </table>
     </div>
 </div>
 
