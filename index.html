@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CBT SMK - Ujian Online</title>
     <link rel="stylesheet" href="style.css">
+
     <style>
-        /* Animasi Loading untuk Update Otomatis */
         .loader {
             border: 8px solid #f3f3f3;
             border-top: 8px solid #3498db;
@@ -15,115 +15,146 @@
             height: 60px;
             animation: spin 2s linear infinite;
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes spin { 
+            0% { transform: rotate(0deg); } 
+            100% { transform: rotate(360deg); } 
+        }
 
-        /* Overlay Full Screen saat Update */
         #update-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.95); color: white;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            z-index: 99999; text-align: center; font-family: 'Segoe UI', sans-serif;
+            z-index: 99999; text-align: center;
         }
 
-        /* Tambahan Style Header agar Rapi */
         header { 
             background: #1a2a6c; color: white; padding: 15px; 
             display: flex; justify-content: space-between; align-items: center;
-            position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            position: sticky; top: 0; z-index: 100;
         }
+
         .info-siswa { display: flex; flex-direction: column; }
-        .nama { font-weight: bold; font-size: 16px; }
+        .nama { font-weight: bold; }
         .mapel-badge { 
             background: #f39c12; color: #000; padding: 2px 8px; 
-            border-radius: 4px; font-size: 12px; font-weight: bold; margin-top: 5px;
-            display: inline-block; width: fit-content;
+            border-radius: 4px; font-size: 12px; margin-top: 5px;
         }
-        #timer { font-size: 24px; font-weight: bold; color: #f1c40f; }
+
+        #timer { font-size: 22px; font-weight: bold; color: #f1c40f; }
     </style>
 </head>
+
 <body>
 
-    <div id="login-section">
-        <div class="login-container">
-            <h2>LOGIN UJIAN</h2>
-            <input type="text" id="username" placeholder="Masukkan NIS Anda...">
-            <button id="btn-login" onclick="prosesLogin()">Mulai Ujian</button>
-        </div>
+<!-- LOGIN -->
+<div id="login-section">
+    <div class="login-container">
+        <h2>LOGIN UJIAN</h2>
+        <input type="text" id="username" placeholder="Masukkan NIS Anda...">
+        <button id="btn-login" onclick="prosesLogin()">Mulai Ujian</button>
     </div>
+</div>
 
-    <div id="exam-section" style="display: none;">
-        <header>
-            <div class="info-siswa">
-                <span id="nama-siswa" class="nama">Nama Siswa</span>
-                <span id="kelas-siswa" style="font-size: 11px; opacity: 0.8;">Kelas | Jurusan</span>
-                <div id="mapel-aktif" class="mapel-badge">Memuat Mapel...</div>
-            </div>
-            <div id="timer">00:00</div>
-        </header>
-
-        <div id="question-container">
-            </div>
-
-        <div style="text-align: center; margin-top: 30px; padding-bottom: 50px;">
-            <button class="btn-submit" onclick="submitJawaban()">Akhiri & Kirim Jawaban</button>
+<!-- UJIAN -->
+<div id="exam-section" style="display: none;">
+    <header>
+        <div class="info-siswa">
+            <span id="nama-siswa" class="nama">Nama</span>
+            <span id="kelas-siswa">Kelas | Jurusan</span>
+            <div id="mapel-aktif" class="mapel-badge">Memuat...</div>
         </div>
+        <div id="timer">00:00</div>
+    </header>
+
+    <div id="question-container"></div>
+
+    <div style="text-align:center; margin-top:30px;">
+        <button class="btn-submit" onclick="submitJawaban()">Kirim Jawaban</button>
     </div>
+</div>
 
-    <script src="script.js"></script>
+<script src="script.js"></script>
 
-    <script>
-        var lastVersion = 0;
+<script>
+let lastVersion = 0;
+let radarInterval = null;
 
-        async function cekPerubahanSoal() {
-            if (typeof BASE_URL === 'undefined' || !BASE_URL) return;
+// ================= RADAR =================
+async function cekPerubahanSoal() {
+    try {
+        if (!window.BASE_URL) return;
 
-            const savedSesi = localStorage.getItem("sesi_siswa");
-            if(!savedSesi) return;
-            const user = JSON.parse(savedSesi);
-            const nisSiswa = user.nis;
+        const sesi = localStorage.getItem("sesi_siswa");
+        if (!sesi) return;
 
-            try {
-                // Tambahkan random param agar tidak kena cache browser
-                const resp = await fetch(`${BASE_URL}?action=checkUpdate&nis=${nisSiswa}&t=${new Date().getTime()}`);
-                const data = await resp.json();
-                
-                // 1. CEK IZIN (EKSEKUSI CEKAL)
-                if (data.izin === "Tidak" || data.izin === "tidak") {
-                    alert("MAAF: Akses ujian Anda telah dicabut oleh Admin. Silakan hubungi pengawas.");
-                    localStorage.clear();
-                    location.reload(); 
-                    return;
-                }
+        const user = JSON.parse(sesi);
 
-                // 2. CEK UPDATE SOAL (RADAR)
-                let serverVersion = data.lastUpdate || 1;
-                if (lastVersion === 0) {
-                    lastVersion = serverVersion;
-                    return;
-                }
+        const resp = await fetch(`${BASE_URL}?action=checkUpdate&nis=${user.nis}&t=${Date.now()}`);
+        const text = await resp.text();
 
-                if (serverVersion > lastVersion) {
-                    tampilkanLoadingUpdate();
-                }
-            } catch (e) { console.log("Radar offline."); }
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch {
+            console.log("Bukan JSON:", text);
+            return;
         }
 
-        function tampilkanLoadingUpdate() {
-            if (document.getElementById('update-overlay')) return;
-            const overlay = document.createElement('div');
-            overlay.id = 'update-overlay';
-            overlay.innerHTML = `
-                <div class="loader"></div>
-                <h2 style="margin-top:20px;">PEMBARUAN DATA...</h2>
-                <p style="padding: 0 20px; opacity: 0.8;">Admin melakukan perbaikan data.<br>Jawaban Anda aman, halaman dimuat ulang.</p>
-            `;
-            document.body.appendChild(overlay);
-            setTimeout(() => { location.reload(); }, 2500);
+        // 🔐 CEK IZIN
+        if ((data.izin || "").toLowerCase() === "tidak") {
+            alert("Akses ujian dicabut!");
+            localStorage.clear();
+            location.reload();
+            return;
         }
 
-        // Interval radar setiap 30 detik
-        setInterval(cekPerubahanSoal, 30000);
-    </script>
+        // 🔄 CEK UPDATE
+        let serverVersion = data.lastUpdate || 1;
+
+        if (lastVersion === 0) {
+            lastVersion = serverVersion;
+            return;
+        }
+
+        if (serverVersion > lastVersion) {
+            tampilkanLoading();
+        }
+
+    } catch (e) {
+        console.log("Radar error:", e);
+    }
+}
+
+// ================= LOADING =================
+function tampilkanLoading() {
+    if (document.getElementById('update-overlay')) return;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'update-overlay';
+    overlay.innerHTML = `
+        <div class="loader"></div>
+        <h2>Memperbarui Soal...</h2>
+        <p>Halaman akan dimuat ulang</p>
+    `;
+
+    document.body.appendChild(overlay);
+    setTimeout(() => location.reload(), 2500);
+}
+
+// ================= START RADAR =================
+function mulaiRadar() {
+    if (radarInterval) return;
+    radarInterval = setInterval(cekPerubahanSoal, 30000);
+}
+
+// ================= AUTO START =================
+window.addEventListener("load", () => {
+    const sesi = localStorage.getItem("sesi_siswa");
+    if (sesi) {
+        mulaiRadar();
+    }
+});
+</script>
 
 </body>
 </html>
