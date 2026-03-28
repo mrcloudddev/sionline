@@ -1,7 +1,7 @@
 /**
  * SISTEM UJIAN ONLINE SMK - CLIENT SIDE (STABIL V.5.0 FINAL)
  * Developer: Pak Dwi Frediawan
- * Fitur: Auto-Save, Anti-Refresh Timer, Auto-Mapel Display, & Radar Sync
+ * Fitur: Auto-Save, Anti-Refresh Timer, Auto-Mapel Display, Radar Sync, & Safety Render
  */
 
 // GANTI LINK DI BAWAH INI DENGAN LINK DEPLOYMENT APPS SCRIPT TERBARU (NEW VERSION)
@@ -55,7 +55,7 @@ async function cekStatusDanLoadSoal(kelas, jurusan) {
         const res = await resp.json();
         
         if(res.status === "Aktif") {
-            // MUNCULKAN NAMA MAPEL DI HEADER (Jika elemen ada di index.html)
+            // MUNCULKAN NAMA MAPEL DI HEADER HTML
             const badgeMapel = document.getElementById('mapel-aktif');
             if(badgeMapel) badgeMapel.innerText = res.mapelAktif || "Ujian Berlangsung";
 
@@ -72,7 +72,7 @@ async function cekStatusDanLoadSoal(kelas, jurusan) {
             const soal = await respSoal.json();
             renderSoal(soal);
         } else {
-            alert("Ujian sudah ditutup oleh Admin atau jadwal tidak cocok.");
+            alert("Ujian belum dibuka atau sudah ditutup oleh Admin.");
             bersihkanMemori();
         }
     } catch(e) {
@@ -87,10 +87,10 @@ function renderSoal(soal) {
     // CEK JIKA SOAL KOSONG
     if(!soal || soal.length === 0) {
         cont.innerHTML = `
-            <div style="text-align:center; padding:50px; background:white; border-radius:10px; margin:20px 0;">
+            <div style="text-align:center; padding:50px; background:white; border-radius:10px; margin:20px 0; border: 2px dashed #ddd;">
                 <h3 style="color:#e74c3c;">SOAL BELUM TERSEDIA</h3>
                 <p>Belum ada soal aktif untuk Rombel: <strong>${dataSiswaAktif.kelas}</strong></p>
-                <p style="font-size:13px; color:#7f8c8d;">Pastikan Admin sudah mengaktifkan jadwal yang sesuai.</p>
+                <p style="font-size:13px; color:#7f8c8d;">Pastikan Admin sudah mengaktifkan jadwal dan menginput soal yang sesuai.</p>
             </div>`;
         return;
     }
@@ -156,7 +156,9 @@ async function submitJawaban(auto = false) {
     if(btn) { btn.innerText = "Sedang Mengirim..."; btn.disabled = true; }
 
     const kumpulanSoal = document.querySelectorAll('.soal-item');
-    const mapelSiswa = kumpulanSoal.length > 0 ? kumpulanSoal[0].dataset.mapel : (document.getElementById('mapel-aktif').innerText || "-");
+    // Ambil nama mapel dari soal pertama atau dari badge header
+    const badgeMapel = document.getElementById('mapel-aktif');
+    const mapelSiswa = kumpulanSoal.length > 0 ? (kumpulanSoal[0].dataset.mapel || badgeMapel.innerText) : (badgeMapel ? badgeMapel.innerText : "-");
 
     const dataJawaban = Array.from(kumpulanSoal).map(el => ({
         id: el.dataset.id,
@@ -188,7 +190,9 @@ async function submitJawaban(auto = false) {
 }
 
 function bersihkanMemori() {
-    localStorage.clear();
+    localStorage.removeItem("sesi_siswa");
+    localStorage.removeItem("jawaban_lokal");
+    localStorage.removeItem("sisa_waktu");
     location.reload();
 }
 
