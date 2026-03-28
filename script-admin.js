@@ -1,7 +1,7 @@
 /**
- * SISTEM ADMIN SMK MANDIRI - LOGIKA FINAL (V.8.0)
+ * SISTEM ADMIN SMK MANDIRI - LOGIKA FINAL (V.9.0)
  * Developer: Pak Dwi Frediawan
- * Fitur: Dashboard, Multi-Jurusan Soal, Bulk Izin Siswa, & Rekap Nilai
+ * Fitur: CRUD Soal (Input/Edit/Hapus), Dashboard, Bulk Izin Siswa, & Rekap Nilai
  */
 
 const BASE_URL = "https://script.google.com/macros/s/AKfycbyaCdUx42X8ZitcIuFGaDxt2PmtIHYxf6FoTk6BJ37cU4zK8znApiyvB5CrAOoDSecl/exec";
@@ -42,7 +42,7 @@ async function muatJadwal() {
                 </td>
             </tr>`;
         }).join('');
-    } catch (e) { body.innerHTML = "Gagal muat jadwal."; }
+    } catch (e) { body.innerHTML = "<tr><td colspan='4'>Gagal muat jadwal.</td></tr>"; }
 }
 
 async function toggleUjian(mapel, tingkat, status) {
@@ -55,7 +55,7 @@ async function toggleUjian(mapel, tingkat, status) {
     } catch (e) { alert("Gagal update status."); }
 }
 
-// --- 3. KELOLA SOAL (INPUT & DAFTAR) ---
+// --- 3. KELOLA SOAL (INPUT, EDIT, DAFTAR) ---
 function switchSubSoal(mode) {
     document.getElementById('sub-soal-input').classList.toggle('hidden', mode !== 'input');
     document.getElementById('sub-soal-daftar').classList.toggle('hidden', mode !== 'daftar');
@@ -64,11 +64,11 @@ function switchSubSoal(mode) {
     if (mode === 'daftar') muatDatabaseSoal();
 }
 
+// FUNGSI SIMPAN (UNTUK BARU & EDIT)
 async function simpanSoal() {
     const btn = document.querySelector('button[onclick="simpanSoal()"]');
     if(btn) { btn.innerText = "Menyimpan..."; btn.disabled = true; }
 
-    // Ambil Multiple Jurusan
     const selectJurusan = document.getElementById('i-jurusan');
     const pilihanJurusan = Array.from(selectJurusan.selectedOptions).map(opt => opt.value).join(', ');
 
@@ -91,8 +91,8 @@ async function simpanSoal() {
     };
 
     try {
-        await fetch(BASE_URL, { method: 'POST', body: JSON.stringify(data) });
-        alert("Berhasil!");
+        const resp = await fetch(BASE_URL, { method: 'POST', body: JSON.stringify(data) });
+        alert("Data Berhasil Diproses!");
         location.reload();
     } catch (e) {
         alert("Gagal Simpan.");
@@ -106,7 +106,6 @@ async function muatDatabaseSoal() {
         const r = await fetch(`${BASE_URL}?action=getDatabaseSoal`);
         const d = await r.json();
         
-        // Update Filter Mapel
         const listMapel = [...new Set(d.map(v => v[8]).filter(v => v))].sort();
         document.getElementById('filter-mapel-soal').innerHTML = '<option value="">-- Semua Mapel --</option>' + 
             listMapel.map(m => `<option value="${m}">${m}</option>`).join('');
@@ -118,10 +117,51 @@ async function muatDatabaseSoal() {
                 <td>${v[3]}</td>
                 <td>${(v[4]||'').toString().substring(0,30)}...</td>
                 <td>
+                    <button class="btn btn-sm btn-orange" onclick='isiFormEdit(${JSON.stringify(v)})'>Edit</button>
                     <button class="btn btn-sm btn-red" onclick="hapusSoal('${v[0]}')">Hapus</button>
                 </td>
             </tr>`).join('');
-    } catch (e) { body.innerHTML = "Gagal muat soal."; }
+    } catch (e) { body.innerHTML = "<tr><td colspan='5'>Gagal muat soal.</td></tr>"; }
+}
+
+function isiFormEdit(v) {
+    switchSubSoal('input');
+    document.getElementById('edit-id').value = v[0];
+    document.getElementById('i-mapel-nama').value = v[8];
+    document.getElementById('i-tingkat').value = v[1];
+    document.getElementById('i-rombel').value = v[1];
+    document.getElementById('q-text').value = v[4];
+    document.getElementById('q-kunci').value = v[6];
+    document.getElementById('i-status').value = v[7];
+    document.getElementById('i-tipe').value = v[3];
+    
+    // Pilih Multiple Jurusan
+    const jurArray = v[2].split(',').map(s => s.trim());
+    const selectJur = document.getElementById('i-jurusan');
+    Array.from(selectJur.options).forEach(opt => {
+        opt.selected = jurArray.includes(opt.value);
+    });
+
+    // Opsi Jawaban
+    try {
+        const opsi = JSON.parse(v[5]);
+        document.getElementById('o1').value = opsi[0] || '';
+        document.getElementById('o2').value = opsi[1] || '';
+        document.getElementById('o3').value = opsi[2] || '';
+        document.getElementById('o4').value = opsi[3] || '';
+    } catch(e) { console.log("Format Opsi Bukan JSON"); }
+
+    document.getElementById('form-title').innerText = "Edit Soal: " + v[0];
+    document.getElementById('btn-cancel-edit').classList.remove('hidden');
+    toggleOpsi();
+    window.scrollTo(0,0);
+}
+
+function resetFormSoal() {
+    document.getElementById('edit-id').value = "";
+    document.getElementById('q-text').value = "";
+    document.getElementById('form-title').innerText = "Form Input/Edit Soal";
+    document.getElementById('btn-cancel-edit').classList.add('hidden');
 }
 
 async function hapusSoal(id) {
@@ -140,7 +180,6 @@ async function muatTabelSiswa() {
         const r = await fetch(`${BASE_URL}?action=getDataSiswa`);
         const d = await r.json();
         
-        // Isi Filter Kelas Otomatis
         const listKelas = [...new Set(d.map(v => v[2]))].sort();
         document.getElementById('filter-kelas-siswa').innerHTML = '<option value="">-- Semua Kelas --</option>' + 
             listKelas.map(k => `<option value="${k}">${k}</option>`).join('');
@@ -158,7 +197,12 @@ async function muatTabelSiswa() {
                 </td>
             </tr>`;
         }).join('');
-    } catch (e) { body.innerHTML = "Gagal muat siswa."; }
+    } catch (e) { body.innerHTML = "<tr><td colspan='6'>Gagal muat siswa.</td></tr>"; }
+}
+
+async function ubahIzinSiswa(nis, status) {
+    await fetch(BASE_URL, { method: 'POST', body: JSON.stringify({ action: "updateIzinSiswa", nis, status }) });
+    muatTabelSiswa();
 }
 
 function toggleSelectAll(source) {
@@ -173,14 +217,11 @@ function toggleSelectAll(source) {
 async function bulkUpdateIzin(status) {
     const terpilih = Array.from(document.querySelectorAll('.check-siswa:checked')).map(cb => cb.value);
     if(terpilih.length === 0) return alert("Pilih siswa dulu!");
-    
     if(!confirm(`Update izin ${terpilih.length} siswa menjadi ${status}?`)) return;
-    
     for(let nis of terpilih) {
         await fetch(BASE_URL, { method: 'POST', body: JSON.stringify({ action: "updateIzinSiswa", nis, status }) });
     }
-    alert("Berhasil diperbarui!");
-    muatTabelSiswa();
+    alert("Berhasil!"); muatTabelSiswa();
 }
 
 function filterTabelSiswa() {
@@ -198,7 +239,6 @@ async function muatRekapNilai() {
     const body = document.getElementById('t-nilai');
     if(!body) return;
     body.innerHTML = "<tr><td colspan='5' style='text-align:center'>Memuat hasil...</td></tr>";
-    
     try {
         const r = await fetch(`${BASE_URL}?action=getRekapNilai`);
         const d = await r.json();
@@ -207,7 +247,7 @@ async function muatRekapNilai() {
                 <td>${v[0] ? new Date(v[0]).toLocaleString('id-ID') : '-'}</td>
                 <td>${v[1]}</td><td>${v[2]}</td><td>${v[4]}</td><td><strong>${v[5]}</strong></td>
             </tr>`).join('');
-    } catch (e) { body.innerHTML = "<tr><td colspan='5' style='text-align:center'>Belum ada hasil ujian.</td></tr>"; }
+    } catch (e) { body.innerHTML = "<tr><td colspan='5'>Belum ada hasil.</td></tr>"; }
 }
 
 // --- HELPER ---
