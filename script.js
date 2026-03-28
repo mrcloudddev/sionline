@@ -4,7 +4,7 @@ const BASE_URL = "https://script.google.com/macros/s/AKfycbzcfarL2U0IVKCjWYePFOx
 let dataSiswaAktif = {};
 let timerInterval;
 
-// --- 1. FUNGSI LOGIN & PEMULIHAN SESI ---
+// --- 1. FUNGSI LOGIN ---
 async function prosesLogin() {
     const user = document.getElementById('username').value;
     if(!user) return alert("Masukkan NIS!");
@@ -16,11 +16,9 @@ async function prosesLogin() {
         const resp = await fetch(`${BASE_URL}?action=login&user=${encodeURIComponent(user)}`);
         const res = await resp.json();
         
-        if(res.status === "Sukses" && res.izin === "Ya") {
-            // PENTING: Simpan NIS ke dalam objek res agar radar bisa membacanya nanti
+        if(res.status === "Sukses") {
+            // PENTING: Simpan NIS agar sesi tetap terjaga
             res.nis = user; 
-            
-            // SIMPAN SESI LOGIN KE LOKAL
             localStorage.setItem("sesi_siswa", JSON.stringify(res));
             jalankanUjian(res);
         } else {
@@ -28,7 +26,7 @@ async function prosesLogin() {
             if(btn) { btn.innerText = "Mulai Ujian"; btn.disabled = false; }
         }
     } catch(e) {
-        alert("Error Server! Periksa koneksi.");
+        alert("Server sedang sibuk atau koneksi terputus.");
         if(btn) { btn.innerText = "Mulai Ujian"; btn.disabled = false; }
     }
 }
@@ -61,34 +59,36 @@ async function cekStatusDanLoadSoal(kelas, jurusan) {
             const soal = await respSoal.json();
             renderSoal(soal);
         } else {
-            alert("Ujian sudah ditutup oleh Admin.");
+            alert("Ujian belum dibuka atau sudah ditutup oleh Admin.");
             bersihkanMemori();
         }
     } catch(e) {
-        console.log("Gagal muat data.");
+        console.log("Gagal sinkronisasi jadwal.");
     }
 }
 
-// --- 2. RENDER SOAL & RESTORE JAWABAN (AUTO-SAVE) ---
+// --- 2. RENDER SOAL & AUTO-SAVE ---
 function renderSoal(soal) {
     const cont = document.getElementById('question-container');
+    if(!soal || soal.length === 0) {
+        cont.innerHTML = "<p style='text-align:center; padding:20px;'>Belum ada soal untuk kelas/jurusan Anda.</p>";
+        return;
+    }
+
     const savedAnswers = JSON.parse(localStorage.getItem("jawaban_lokal") || "{}");
 
     cont.innerHTML = soal.map((s, i) => {
         let qText = s.pertanyaan.replace(/\[IMG\](.*?)\[\/IMG\]/g, '<img src="$1" class="img-soal">');
         
         return `
-        <div class="soal-item" data-id="${s.id}">
+        <div class="soal-item" data-id="${s.id}" data-mapel="${s.mapel}">
             <p><strong>${i+1}.</strong> ${qText}</p>
             ${s.opsi.map(o => {
-                let isImg = (o.startsWith("http"));
-                let content = isImg ? `<img src="${o}" class="img-opsi">` : `<span>${o}</span>`;
                 let isChecked = savedAnswers[s.id] === o ? "checked" : "";
-                
                 return `
                 <label class="option-label">
                     <input type="radio" name="q${s.id}" value="${o}" ${isChecked} onchange="simpanJawabanLokal('${s.id}', '${o}')"> 
-                    ${content}
+                    <span>${o}</span>
                 </label>`;
             }).join('')}
         </div>`;
@@ -101,14 +101,9 @@ function simpanJawabanLokal(idSoal, nilai) {
     localStorage.setItem("jawaban_lokal", JSON.stringify(savedAnswers));
 }
 
-// --- 3. TIMER ANTI-RESET ---
+// --- 3. TIMER ---
 function mulaiTimer(durasiMenit, sisaDetikManual) {
-    let sisaDetik;
-    if (sisaDetikManual !== null) {
-        sisaDetik = sisaDetikManual;
-    } else {
-        sisaDetik = durasiMenit * 60;
-    }
+    let sisaDetik = sisaDetikManual !== null ? sisaDetikManual : durasiMenit * 60;
 
     if(timerInterval) clearInterval(timerInterval);
     
@@ -116,7 +111,6 @@ function mulaiTimer(durasiMenit, sisaDetikManual) {
         if (sisaDetik <= 0) {
             clearInterval(timerInterval);
             document.getElementById('timer').innerText = "00:00";
-            localStorage.removeItem("sisa_waktu");
             submitJawaban(true);
             return;
         }
@@ -129,52 +123,55 @@ function mulaiTimer(durasiMenit, sisaDetikManual) {
     }, 1000);
 }
 
-// --- 4. SUBMIT & BERSIHKAN SEMUA MEMORI ---
+// --- 4. SUBMIT JAWABAN (FIXED) ---
 async function submitJawaban(auto = false) {
-    if(!auto && !confirm("Kirim jawaban sekarang?")) return;
+    if(!auto && !confirm("Kirim jawaban sekarang? Pastikan semua soal terjawab.")) return;
     
     clearInterval(timerInterval);
     const btn = document.querySelector('.btn-submit');
     if(btn) { btn.innerText = "Mengirim..."; btn.disabled = true; }
 
-    const jawaban = Array.from(document.querySelectorAll('.soal-item')).map(el => ({
+    const kumpulanSoal = document.querySelectorAll('.soal-item');
+    const mapelSiswa = kumpulanSoal.length > 0 ? kumpulanSoal[0].dataset.mapel : "-";
+
+    const dataJawaban = Array.from(kumpulanSoal).map(el => ({
         id: el.dataset.id,
         jawaban: el.querySelector('input:checked') ? el.querySelector('input:checked').value : ""
     }));
 
     try {
-        await fetch(BASE_URL, { 
+        // Hapus mode 'no-cors' agar pengiriman data valid
+        const response = await fetch(BASE_URL, { 
             method: 'POST', 
-            mode: 'no-cors', 
-            body: JSON.stringify({ action: "submitJawaban", ...dataSiswaAktif, jawaban }) 
+            body: JSON.stringify({ 
+                action: "submitJawaban", 
+                ...dataSiswaAktif, 
+                mapel: mapelSiswa,
+                jawaban: dataJawaban 
+            }) 
         });
         
-        alert("Berhasil Terkirim!"); 
-        bersihkanMemori();
+        const hasil = await response.json();
+        if(hasil.status === "Sukses") {
+            alert("Jawaban Anda Berhasil Terkirim!"); 
+            bersihkanMemori();
+        } else {
+            throw new Error();
+        }
     } catch(e) { 
-        alert("Gagal Kirim! Cek koneksi internet Anda."); 
-        if(btn) { btn.innerText = "Kirim Jawaban"; btn.disabled = false; }
+        alert("Gagal Terkirim! Coba klik tombol Kirim lagi."); 
+        if(btn) { btn.innerText = "Kirim Ulang Jawaban"; btn.disabled = false; }
     }
 }
 
 function bersihkanMemori() {
-    localStorage.removeItem("sesi_siswa");
-    localStorage.removeItem("jawaban_lokal");
-    localStorage.removeItem("sisa_waktu");
+    localStorage.clear();
     location.reload();
 }
 
-// --- 5. LOGIKA AUTO-RESTORE SAAT REFRESH / RADAR ---
 window.onload = function() {
-    // Jalankan radar update (dari index.html)
-    if (typeof cekPerubahanSoal === 'function') {
-        cekPerubahanSoal();
-    }
-
-    // Restore Sesi jika ada
     const savedSesi = localStorage.getItem("sesi_siswa");
     if(savedSesi) {
-        console.log("Memulihkan sesi ujian...");
         jalankanUjian(JSON.parse(savedSesi));
     }
 };
