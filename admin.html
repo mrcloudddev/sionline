@@ -71,12 +71,13 @@
                     <select id="i-tingkat"><option>X</option><option>XI</option><option>XII</option></select>
                 </div>
                 <div><label>Target Jurusan (Bisa Pilih > 1):</label>
-                    <select id="i-jurusan" multiple title="Tahan tombol Ctrl (Windows) / Command (Mac) untuk memilih lebih dari satu">
-                        <option value="Umum">Umum (Semua)</option>
-                        <option value="Broadcasting">Broadcasting</option>
-                        <option value="Teknik Sepeda Motor">Teknik Sepeda Motor</option>
-                        <option value="Akuntansi">Akuntansi</option>
+                    <select id="i-jurusan" multiple>
+                        <option value="umum">Umum (Semua)</option>
+                        <option value="TSM">TSM (Teknik Sepeda Motor)</option>
+                        <option value="BP">BP (Broadcasting)</option>
+                        <option value="AK">AK (Akuntansi)</option>
                     </select>
+                    <small>Gunakan kode jurusan (TSM, BP, AK)</small>
                 </div>
                 <div><label>Tipe Soal:</label>
                     <select id="i-tipe" onchange="toggleOpsi()">
