@@ -2,7 +2,7 @@
  * CBT SMK - CLIENT FINAL STABLE UI + FIX TOTAL
  */
 
-const BASE_URL = "https://script.google.com/macros/s/AKfycbw2vmXsbj_xIGj6MaiEjiVEDqc_-RqLBmMg3bri8QEwgc-S8BkWyHcP475FwivgCOd2/exec";
+const BASE_URL = "https://script.google.com/macros/s/AKfycbwZJdkYUoCy_C1dvTWRrMIMJIchwN95W_EJ8o8a1nEDZqqMH4-wPJ3KXfS0uQlAXQHK/exec";
 
 let dataSiswaAktif = {};
 let timerInterval;
