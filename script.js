@@ -1,5 +1,5 @@
 /**
- * CBT SMK - CLIENT FINAL FIX TOTAL (SOAL PASTI MUNCUL)
+ * CBT SMK - CLIENT FINAL STABLE (FIX TOTAL)
  */
 
 const BASE_URL = "https://script.google.com/macros/s/AKfycby8CN5r6EELdna7N99qLnjzjxa2xeba3aIoojL5hWzHWdQIyMCsIfh_yI6WV_VBHQA6/exec";
@@ -22,7 +22,7 @@ async function prosesLogin() {
             res.nis = user;
 
             if (!res.kelas || !res.jurusan) {
-                alert("Data siswa tidak lengkap (kelas/jurusan kosong)");
+                alert("Data siswa tidak lengkap!");
                 return;
             }
 
@@ -59,7 +59,7 @@ async function cekStatusDanLoadSoal() {
         console.log("DEBUG KELAS:", kelas);
         console.log("DEBUG JURUSAN:", jurusan);
 
-        // ===== STATUS UJIAN =====
+        // ===== STATUS =====
         const resp = await fetch(`${BASE_URL}?action=getStatusUjian&kelas=${kelas}&jurusan=${jurusan}`);
         const res = await resp.json();
 
@@ -74,9 +74,20 @@ async function cekStatusDanLoadSoal() {
 
         mulaiTimer(res.durasi || 60);
 
-        // ===== AMBIL SOAL =====
+        // ===== SOAL =====
         const soalResp = await fetch(`${BASE_URL}?action=getSoal&kelas=${kelas}&jurusan=${jurusan}`);
-        const soal = await soalResp.json();
+
+        const text = await soalResp.text();
+        console.log("RAW RESPONSE:", text);
+
+        let soal = [];
+
+        try {
+            soal = JSON.parse(text);
+        } catch {
+            alert("❌ Response bukan JSON (cek backend)");
+            return;
+        }
 
         console.log("DATA SOAL:", soal);
 
@@ -110,13 +121,17 @@ function renderSoal(soal) {
     const saved = JSON.parse(localStorage.getItem("jawaban_lokal") || "{}");
 
     cont.innerHTML = soal.map((s, i) => {
-        let q = (s.pertanyaan || "").replace(/\[IMG\](.*?)\[\/IMG\]/g,
+
+        // 🔥 FIX UTAMA
+        let q = String(s.pertanyaan || "");
+
+        q = q.replace(/\[IMG\](.*?)\[\/IMG\]/g,
             '<img src="$1" style="max-width:100%">');
 
         return `
         <div class="soal-item" data-id="${s.id}" data-mapel="${s.mapel}">
             <p><b>${i + 1}.</b> ${q}</p>
-            ${s.opsi.map(o => `
+            ${(s.opsi || []).map(o => `
                 <label>
                     <input type="radio" name="q${s.id}" value="${o}"
                     ${saved[s.id] === o ? "checked" : ""}
