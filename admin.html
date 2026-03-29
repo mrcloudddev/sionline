@@ -1,170 +1,195 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master Admin - SMK Mandiri</title>
-    <style>
-        :root { --sidebar: #2c3e50; --bg: #f4f6f9; --blue: #3498db; --green: #28a745; --red: #e74c3c; --orange: #f39c12; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-        body { display: flex; background: var(--bg); }
-        #sidebar { width: 260px; height: 100vh; background: var(--sidebar); color: white; position: fixed; }
-        .side-header { padding: 20px; font-weight: bold; border-bottom: 1px solid #4b545c; text-align: center; }
-        .nav-item { padding: 15px 25px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 10px; }
-        .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.1); border-left: 5px solid var(--blue); }
-        #main { flex: 1; margin-left: 260px; padding: 30px; }
-        .panel { background: white; padding: 25px; border-radius: 8px; display: none; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .panel.active { display: block; }
-        .sub-nav { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 15px; }
-        .btn-sub { padding: 8px 15px; border-radius: 5px; border: 1px solid #ddd; cursor: pointer; background: white; font-weight: 600; }
-        .btn-sub.active { background: var(--blue); color: white; border-color: var(--blue); }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; }
-        th, td { border: 1px solid #eee; padding: 10px; text-align: left; font-size: 13px; }
-        th { background: #f8f9fa; font-weight: bold; color: #333; }
-        input, select, textarea { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; }
-        .btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; }
-        .btn-blue { background: var(--blue); } .btn-red { background: var(--red); } .btn-green { background: var(--green); } .btn-orange { background: var(--orange); }
-        .btn-sm { padding: 5px 10px; font-size: 12px; margin-right: 2px; }
-        .hidden { display: none; }
-        .badge { padding: 4px 8px; border-radius: 4px; color: white; font-size: 11px; font-weight: bold; }
-        .bulk-action-area { background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
-        small { color: #7f8c8d; }
-        /* Style khusus untuk select multiple */
-        select[multiple] { height: 80px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin CBT SMK</title>
+
+<style>
+:root {
+  --sidebar:#2c3e50;
+  --bg:#f4f6f9;
+  --blue:#3498db;
+  --green:#28a745;
+  --red:#e74c3c;
+}
+
+body { display:flex; margin:0; font-family:Segoe UI; background:var(--bg); }
+
+#sidebar {
+  width:250px; height:100vh;
+  background:var(--sidebar); color:white;
+  position:fixed;
+}
+
+.side-header {
+  padding:20px; text-align:center;
+  font-weight:bold; border-bottom:1px solid #444;
+}
+
+.nav-item {
+  padding:15px; cursor:pointer;
+}
+.nav-item:hover,.active {
+  background:#34495e;
+}
+
+#main {
+  margin-left:250px;
+  padding:25px;
+  width:100%;
+}
+
+.panel {
+  display:none;
+  background:white;
+  padding:20px;
+  border-radius:8px;
+}
+.panel.active { display:block; }
+
+input,select,textarea {
+  width:100%; padding:10px;
+  margin:6px 0;
+  border:1px solid #ddd;
+  border-radius:5px;
+}
+
+.btn {
+  padding:10px;
+  border:none;
+  color:white;
+  cursor:pointer;
+  border-radius:5px;
+}
+.btn-blue { background:var(--blue); }
+.btn-green { background:var(--green); }
+.btn-red { background:var(--red); }
+
+table {
+  width:100%;
+  border-collapse:collapse;
+}
+td,th {
+  border:1px solid #eee;
+  padding:8px;
+}
+</style>
 </head>
+
 <body>
 
 <div id="sidebar">
-    <div class="side-header">ADMIN SMK MANDIRI</div>
-    <div class="nav-item active" onclick="showPanel('p-dash', this)">🏠 Dashboard</div>
-    <div class="nav-item" onclick="showPanel('p-soal', this)">📝 Kelola Soal</div>
-    <div class="nav-item" onclick="showPanel('p-siswa', this)">👥 Data Siswa</div>
-    <div class="nav-item" onclick="showPanel('p-nilai', this)">📊 Hasil Ujian</div>
+  <div class="side-header">ADMIN CBT</div>
+  <div class="nav-item active" onclick="showPanel('dash',this)">Dashboard</div>
+  <div class="nav-item" onclick="showPanel('soal',this)">Kelola Soal</div>
 </div>
 
 <div id="main">
-    <div id="p-dash" class="panel active">
-        <h2>Kontrol Jadwal Ujian</h2>
-        <p><small>Klik tombol ON/OFF untuk membuka atau menutup akses ujian siswa.</small></p>
-        <table>
-            <thead><tr><th>Mata Pelajaran</th><th>Rombel / Tingkat</th><th>Status</th><th>Aksi</th></tr></thead>
-            <tbody id="t-jadwal"></tbody>
-        </table>
-    </div>
 
-    <div id="p-soal" class="panel">
-        <div class="sub-nav">
-            <button id="btn-sub-input" class="btn-sub active" onclick="switchSubSoal('input')">➕ Input Soal Baru</button>
-            <button id="btn-sub-daftar" class="btn-sub" onclick="switchSubSoal('daftar')">📋 Daftar Soal</button>
-        </div>
-
-        <div id="sub-soal-input">
-            <h3 id="form-title">Form Input/Edit Soal</h3>
-            <input type="hidden" id="edit-id">
-            
-            <label>Nama Mata Pelajaran:</label>
-            <input type="text" id="i-mapel-nama" placeholder="Contoh: Informatika">
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
-                <div><label>Tingkatan:</label>
-                    <select id="i-tingkat"><option>X</option><option>XI</option><option>XII</option></select>
-                </div>
-                <div><label>Target Jurusan (Bisa Pilih > 1):</label>
-                    <select id="i-jurusan" multiple>
-                        <option value="umum">Umum (Semua)</option>
-                        <option value="TSM">TSM (Teknik Sepeda Motor)</option>
-                        <option value="BP">BP (Broadcasting)</option>
-                        <option value="AK">AK (Akuntansi)</option>
-                    </select>
-                    <small>Gunakan kode jurusan (TSM, BP, AK)</small>
-                </div>
-                <div><label>Tipe Soal:</label>
-                    <select id="i-tipe" onchange="toggleOpsi()">
-                        <option value="PG">Pilihan Ganda</option>
-                        <option value="PGK">PG Kompleks</option>
-                        <option value="IS">Isian Singkat</option>
-                        <option value="ES">Esai</option>
-                    </select>
-                </div>
-            </div>
-
-            <label>Rombel Spesifik (Opsional):</label>
-            <input type="text" id="i-rombel" placeholder="Contoh: X BP (Kosongkan jika untuk satu angkatan)">
-            
-            <label>Pertanyaan:</label>
-            <textarea id="q-text" rows="4" placeholder="Gunakan [IMG]url_gambar[/IMG] untuk menyisipkan gambar"></textarea>
-            
-            <div id="opsi-container">
-                <label>Opsi Jawaban (A, B, C, D):</label>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <input id="o1" placeholder="Opsi A"><input id="o2" placeholder="Opsi B">
-                    <input id="o3" placeholder="Opsi C"><input id="o4" placeholder="Opsi D">
-                </div>
-            </div>
-            
-            <label>Kunci Jawaban:</label>
-            <input id="q-kunci" placeholder="Contoh: A (atau jawaban singkat jika Isian)">
-            
-            <label>Status Soal:</label>
-            <select id="i-status"><option value="aktif">Aktif</option><option value="nonaktif">Nonaktif</option></select>
-            
-            <button class="btn btn-blue" style="width:100%" onclick="simpanSoal()">Simpan Soal</button>
-            <button class="btn btn-red hidden" id="btn-cancel-edit" onclick="resetFormSoal()" style="width:100%; margin-top:5px">Batal Edit</button>
-        </div>
-
-        <div id="sub-soal-daftar" class="hidden">
-            <div class="bulk-action-area">
-                <strong>Filter Mapel:</strong>
-                <select id="filter-mapel-soal" onchange="filterTabelSoal()" style="width: 250px; margin: 0;">
-                    <option value="">-- Semua Mapel --</option>
-                </select>
-                <input type="text" id="cari-soal-teks" placeholder="Cari teks soal..." onkeyup="filterTabelSoal()" style="flex: 1; margin: 0;">
-            </div>
-            <table>
-                <thead><tr><th>ID</th><th>Mata Pelajaran (Target)</th><th>Tipe</th><th>Soal</th><th>Aksi</th></tr></thead>
-                <tbody id="t-database-soal"></tbody>
-            </table>
-        </div>
-    </div>
-
-    <div id="p-siswa" class="panel">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom:15px">
-            <h2>Data Siswa & Perizinan</h2>
-            <button class="btn btn-green" onclick="tambahSiswaDialog()">+ Tambah Siswa</button>
-        </div>
-        <div class="bulk-action-area">
-            <strong>Filter Kelas:</strong>
-            <select id="filter-kelas-siswa" onchange="filterTabelSiswa()" style="width:180px; margin:0">
-                <option value="">-- Memuat Kelas... --</option>
-            </select>
-            <div style="margin-left: auto; display: flex; align-items: center; gap: 10px;">
-                <label><input type="checkbox" id="master-checkbox" onclick="toggleSelectAll(this)"> <strong>Pilih Semua</strong></label>
-                <button class="btn btn-sm btn-blue" onclick="bulkUpdateIzin('Ya')">Beri Izin</button>
-                <button class="btn btn-sm btn-red" onclick="bulkUpdateIzin('Tidak')">Cabut Izin</button>
-            </div>
-        </div>
-        <input type="text" id="cari-siswa" placeholder="Cari nama atau NIS siswa..." onkeyup="filterTabelSiswa()">
-        <table>
-            <thead><tr><th width="40px">Pilih</th><th>NIS</th><th>Nama</th><th>Kelas</th><th>Status Izin</th><th>Aksi</th></tr></thead>
-            <tbody id="t-siswa-body"></tbody>
-        </table>
-    </div>
-
-    <div id="p-nilai" class="panel">
-        <h2>Rekap Hasil Ujian</h2>
-        <div class="bulk-action-area">
-            <button class="btn btn-sm btn-green" onclick="muatRekapNilai()">🔄 Refresh Data</button>
-            <p><small>* Data diambil langsung dari sheet Hasil_Ujian</small></p>
-        </div>
-        <table>
-            <thead><tr><th>Waktu</th><th>Nama</th><th>Kelas</th><th>Mapel</th><th>Nilai</th></tr></thead>
-            <tbody id="t-nilai"></tbody>
-        </table>
-    </div>
+<!-- DASHBOARD -->
+<div id="dash" class="panel active">
+  <h2>Jadwal Ujian</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Mapel</th>
+        <th>Kelas</th>
+        <th>Jurusan</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="jadwal"></tbody>
+  </table>
 </div>
 
-<script src="script-admin.js"></script>
+<!-- SOAL -->
+<div id="soal" class="panel">
+
+<h3>Input Soal (Support Multi Kelas)</h3>
+
+<label>Nama Mapel</label>
+<input id="mapel">
+
+<label>Tingkat</label>
+<select id="tingkat">
+<option>X</option>
+<option>XI</option>
+<option>XII</option>
+</select>
+
+<label>Jurusan (Multi)</label>
+<select id="jurusan" multiple>
+<option value="umum">Umum</option>
+<option value="TSM">TSM</option>
+<option value="BP">BP</option>
+<option value="AK">AK</option>
+</select>
+
+<!-- 🔥 INI YANG PALING PENTING -->
+<label>Kelas / Rombel (Bisa Lebih dari 1)</label>
+<input id="kelas"
+placeholder="Contoh: XI TSM 1, XI TSM 2, XI BP">
+
+<small>Gunakan koma untuk banyak kelas</small>
+
+<label>Pertanyaan</label>
+<textarea id="soalText"></textarea>
+
+<label>Opsi</label>
+<input id="o1" placeholder="A">
+<input id="o2" placeholder="B">
+<input id="o3" placeholder="C">
+<input id="o4" placeholder="D">
+
+<label>Kunci</label>
+<input id="kunci">
+
+<button class="btn btn-blue" onclick="simpan()">Simpan</button>
+
+</div>
+
+</div>
+
+<script>
+
+function showPanel(id,el){
+ document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'))
+ document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'))
+ document.getElementById(id).classList.add('active')
+ el.classList.add('active')
+}
+
+async function simpan(){
+
+ const jurusan = Array.from(document.getElementById("jurusan").selectedOptions)
+ .map(o=>o.value).join(",")
+
+ const data = {
+  action:"inputSoal",
+  mapel:document.getElementById("mapel").value,
+  tingkat:document.getElementById("tingkat").value,
+  jurusan:jurusan,
+
+  // 🔥 MULTI KELAS
+  kelas:document.getElementById("kelas").value,
+
+  pertanyaan:document.getElementById("soalText").value,
+  opsi:[
+    o1.value,o2.value,o3.value,o4.value
+  ],
+  kunci:kunci.value
+ }
+
+ await fetch("YOUR_URL",{
+  method:"POST",
+  body:JSON.stringify(data)
+ })
+
+ alert("Soal tersimpan")
+}
+
+</script>
 
 </body>
 </html>
