@@ -1,5 +1,5 @@
 /**
- * CBT SMK - CLIENT FINAL STABLE (FIX TOTAL)
+ * CBT SMK - CLIENT FINAL STABLE UI + FIX TOTAL
  */
 
 const BASE_URL = "https://script.google.com/macros/s/AKfycby8CN5r6EELdna7N99qLnjzjxa2xeba3aIoojL5hWzHWdQIyMCsIfh_yI6WV_VBHQA6/exec";
@@ -122,23 +122,25 @@ function renderSoal(soal) {
 
     cont.innerHTML = soal.map((s, i) => {
 
-        // 🔥 FIX UTAMA
+        // 🔥 FIX UTAMA (ANTI ERROR)
         let q = String(s.pertanyaan || "");
 
         q = q.replace(/\[IMG\](.*?)\[\/IMG\]/g,
-            '<img src="$1" style="max-width:100%">');
+            '<img src="$1" class="img-soal">');
 
         return `
         <div class="soal-item" data-id="${s.id}" data-mapel="${s.mapel}">
             <p><b>${i + 1}.</b> ${q}</p>
+
             ${(s.opsi || []).map(o => `
-                <label>
+                <label class="option-label">
                     <input type="radio" name="q${s.id}" value="${o}"
                     ${saved[s.id] === o ? "checked" : ""}
                     onchange="simpanJawabanLokal('${s.id}','${o}')">
                     ${o}
                 </label>
             `).join('')}
+
         </div>
         `;
     }).join('');
