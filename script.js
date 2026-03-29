@@ -2,7 +2,7 @@
  * CBT SMK - CLIENT FINAL FIX TOTAL (SOAL PASTI MUNCUL)
  */
 
-const BASE_URL = "https://script.google.com/macros/s/AKfycbw-kYl3iXufprFMAnIq0kvFkDovAUHQ-jgB-__7yjOKo-mHq2CHT_meK9YTS27i4ys4/exec";
+const BASE_URL = "https://script.google.com/macros/s/AKfycbwKQdrV04IANysd08p-0XdTTKWTJaGgAOIjweU9_eZv6Nk9zW0i9MarHyNUMaiLM4Vd/exec";
 
 let dataSiswaAktif = {};
 let timerInterval;
