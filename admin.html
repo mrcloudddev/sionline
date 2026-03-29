@@ -14,13 +14,18 @@
     --red: #e74c3c;
     --orange: #f39c12;
 }
+
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
     font-family: 'Segoe UI', sans-serif;
 }
-body { display: flex; background: var(--bg); }
+
+body {
+    display: flex;
+    background: var(--bg);
+}
 
 #sidebar {
     width: 260px;
@@ -29,16 +34,22 @@ body { display: flex; background: var(--bg); }
     color: white;
     position: fixed;
 }
+
 .side-header {
     padding: 20px;
     font-weight: bold;
     border-bottom: 1px solid #4b545c;
     text-align: center;
 }
+
 .nav-item {
     padding: 15px 25px;
     cursor: pointer;
+    display: flex;
+    gap: 10px;
 }
+
+.nav-item:hover,
 .nav-item.active {
     background: rgba(255,255,255,0.1);
     border-left: 5px solid var(--blue);
@@ -56,7 +67,26 @@ body { display: flex; background: var(--bg); }
     border-radius: 8px;
     display: none;
 }
-.panel.active { display: block; }
+
+.panel.active {
+    display: block;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+th, td {
+    border: 1px solid #eee;
+    padding: 10px;
+    font-size: 13px;
+}
+
+th {
+    background: #f8f9fa;
+}
 
 input, select, textarea {
     width: 100%;
@@ -65,15 +95,6 @@ input, select, textarea {
     border: 1px solid #ddd;
     border-radius: 5px;
 }
-
-.btn {
-    padding: 10px;
-    border: none;
-    color: white;
-    cursor: pointer;
-    border-radius: 5px;
-}
-.btn-blue { background: var(--blue); }
 
 select[multiple] {
     height: 100px;
@@ -86,107 +107,101 @@ select[multiple] {
 <!-- SIDEBAR -->
 <div id="sidebar">
     <div class="side-header">ADMIN SMK MANDIRI</div>
-    <div class="nav-item active" onclick="showPanel('p-soal', this)">📝 Kelola Soal</div>
+
+    <div class="nav-item active" onclick="showPanel('p-dash', this)">Dashboard</div>
+    <div class="nav-item" onclick="showPanel('p-soal', this)">Kelola Soal</div>
+    <div class="nav-item" onclick="showPanel('p-siswa', this)">Data Siswa</div>
+    <div class="nav-item" onclick="showPanel('p-nilai', this)">Hasil Ujian</div>
 </div>
 
 <!-- MAIN -->
 <div id="main">
 
-<div id="p-soal" class="panel active">
+<!-- DASHBOARD -->
+<div id="p-dash" class="panel active">
+    <h2>Kontrol Jadwal Ujian</h2>
 
-<h3>Form Input/Edit Soal</h3>
-
-<input type="hidden" id="edit-id">
-
-<label>Nama Mapel</label>
-<input type="text" id="i-mapel-nama">
-
-<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
-
-<div>
-<label>Tingkat</label>
-<select id="i-tingkat">
-<option>X</option>
-<option>XI</option>
-<option>XII</option>
-</select>
+    <table>
+        <thead>
+            <tr>
+                <th>Mapel</th>
+                <th>Kelas</th>
+                <th>Status</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+        <tbody id="t-jadwal"></tbody>
+    </table>
 </div>
 
-<div>
-<label>Jurusan</label>
-<select id="i-jurusan" multiple>
-<option value="umum">Umum</option>
-<option value="TSM">TSM</option>
-<option value="BP">BP</option>
-<option value="AK">AK</option>
-</select>
+<!-- SOAL -->
+<div id="p-soal" class="panel">
+
+    <h3>Input Soal</h3>
+
+    <input type="hidden" id="edit-id">
+
+    <label>Nama Mapel</label>
+    <input type="text" id="i-mapel-nama">
+
+    <label>Tingkatan</label>
+    <select id="i-tingkat">
+        <option>X</option>
+        <option>XI</option>
+        <option>XII</option>
+    </select>
+
+    <label>Jurusan (Bisa lebih dari 1)</label>
+    <select id="i-jurusan" multiple>
+        <option value="TSM">TSM</option>
+        <option value="BP">BP</option>
+        <option value="AK">AK</option>
+    </select>
+
+    <!-- 🔥 INI YANG DIPERBAIKI -->
+    <label>Target Kelas (Multi)</label>
+    <select id="i-rombel" multiple>
+        <option value="XI TSM 1">XI TSM 1</option>
+        <option value="XI TSM 2">XI TSM 2</option>
+        <option value="XI BP">XI BP</option>
+        <option value="XI AK">XI AK</option>
+    </select>
+
+    <label>Pertanyaan</label>
+    <textarea id="q-text"></textarea>
+
+    <label>Opsi</label>
+    <input id="o1" placeholder="A">
+    <input id="o2" placeholder="B">
+    <input id="o3" placeholder="C">
+    <input id="o4" placeholder="D">
+
+    <label>Kunci</label>
+    <input id="q-kunci">
+
+    <button onclick="simpanSoal()">Simpan</button>
+
 </div>
 
-<div>
-<label>Tipe</label>
-<select id="i-tipe">
-<option value="PG">PG</option>
-<option value="IS">Isian</option>
-</select>
+<!-- SISWA -->
+<div id="p-siswa" class="panel">
+    <h2>Data Siswa</h2>
+    <table>
+        <tbody id="t-siswa-body"></tbody>
+    </table>
+</div>
+
+<!-- NILAI -->
+<div id="p-nilai" class="panel">
+    <h2>Nilai</h2>
+    <table>
+        <tbody id="t-nilai"></tbody>
+    </table>
 </div>
 
 </div>
 
-<!-- 🔥 BAGIAN YANG DIUBAH -->
-<label>Rombel (Bisa pilih lebih dari 1)</label>
-<select id="i-rombel-multi" multiple>
-<option value="X TSM 1">X TSM 1</option>
-<option value="X TSM 2">X TSM 2</option>
-<option value="X BP 1">X BP 1</option>
-<option value="X AK 1">X AK 1</option>
-</select>
-
-<small>Bisa pilih lebih dari 1 kelas</small>
-
-<!-- fallback lama -->
-<input type="text" id="i-rombel" placeholder="Atau isi manual jika perlu">
-
-<label>Pertanyaan</label>
-<textarea id="q-text"></textarea>
-
-<label>Opsi</label>
-<input id="o1" placeholder="A">
-<input id="o2" placeholder="B">
-<input id="o3" placeholder="C">
-<input id="o4" placeholder="D">
-
-<label>Kunci</label>
-<input id="q-kunci">
-
-<button class="btn btn-blue" onclick="simpanSoal()">Simpan</button>
-
-</div>
-</div>
-
-<script>
-function simpanSoal() {
-
-    // 🔥 ambil MULTI ROMBEL
-    const multi = document.getElementById("i-rombel-multi");
-    const rombels = Array.from(multi.selectedOptions).map(o => o.value);
-
-    // fallback kalau kosong
-    const rombelManual = document.getElementById("i-rombel").value;
-
-    const tingkatFinal = rombels.length > 0 
-        ? rombels.join(", ")
-        : rombelManual;
-
-    const data = {
-        mapel: document.getElementById("i-mapel-nama").value,
-        tingkat: tingkatFinal,
-        soal: document.getElementById("q-text").value
-    };
-
-    console.log(data);
-    alert("Data siap dikirim ✅");
-}
-</script>
+<script src="script-admin.js"></script>
 
 </body>
 </html>
