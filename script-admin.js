@@ -113,31 +113,5 @@ async function muatDatabaseSoal() {
     } catch (e) { body.innerHTML = "<tr><td colspan='5'>Gagal muat soal.</td></tr>"; }
 }
 
-function doGet(e) {
-  const action = e.parameter.action;
-
-  try {
-    if (action === "login") return handleLogin(e.parameter.user);
-    if (action === "getSoal") return handleGetSoal(e.parameter.kelas, e.parameter.jurusan);
-    if (action === "getStatusUjian") return handleGetStatus(e.parameter.kelas, e.parameter.jurusan);
-
-    // ✅ TAMBAHAN INI
-    if (action === "getPengaturan") return handleGetPengaturan();
-
-    return responJSON({ status: "Error", pesan: "Aksi tidak dikenal" });
-
-  } catch (err) {
-    return responJSON({ status: "Error", pesan: err.message });
-  }
-}
-
-function handleGetPengaturan() {
-  const data = SS.getSheetByName("Pengaturan_Ujian").getDataRange().getValues();
-  data.shift(); // hapus header
-
-  return responJSON(data);
-}
-
-
 // Tambahkan inisialisasi awal
 window.onload = muatJadwal;
