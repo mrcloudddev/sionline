@@ -5,7 +5,7 @@
  */
 
 // PENTING: Ganti dengan URL Web App hasil "New Deployment" (Access: Anyone)
-const BASE_URL = "https://script.google.com/macros/s/AKfycbzBKs4N9FzitNOG1GlmALelkljYzmFN7tPywAUiDhDT3jAWxgS3FadPNmXU0ltHkuIR/exec";
+const BASE_URL = "https://script.google.com/macros/s/AKfycbwZJdkYUoCy_C1dvTWRrMIMJIchwN95W_EJ8o8a1nEDZqqMH4-wPJ3KXfS0uQlAXQHK/exec";
 
 // --- 1. NAVIGASI PANEL UTAMA ---
 function showPanel(id, el) {
