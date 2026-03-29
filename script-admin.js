@@ -5,7 +5,7 @@
  */
 
 // PENTING: Ganti dengan URL Web App hasil "New Deployment" (Access: Anyone)
-const BASE_URL = "https://script.google.com/macros/s/AKfycbw2vmXsbj_xIGj6MaiEjiVEDqc_-RqLBmMg3bri8QEwgc-S8BkWyHcP475FwivgCOd2/exec";
+const BASE_URL = "https://script.google.com/macros/s/AKfycbzBKs4N9FzitNOG1GlmALelkljYzmFN7tPywAUiDhDT3jAWxgS3FadPNmXU0ltHkuIR/exec";
 
 // --- 1. NAVIGASI PANEL UTAMA ---
 function showPanel(id, el) {
@@ -112,6 +112,32 @@ async function muatDatabaseSoal() {
             </tr>`).join('');
     } catch (e) { body.innerHTML = "<tr><td colspan='5'>Gagal muat soal.</td></tr>"; }
 }
+
+function doGet(e) {
+  const action = e.parameter.action;
+
+  try {
+    if (action === "login") return handleLogin(e.parameter.user);
+    if (action === "getSoal") return handleGetSoal(e.parameter.kelas, e.parameter.jurusan);
+    if (action === "getStatusUjian") return handleGetStatus(e.parameter.kelas, e.parameter.jurusan);
+
+    // ✅ TAMBAHAN INI
+    if (action === "getPengaturan") return handleGetPengaturan();
+
+    return responJSON({ status: "Error", pesan: "Aksi tidak dikenal" });
+
+  } catch (err) {
+    return responJSON({ status: "Error", pesan: err.message });
+  }
+}
+
+function handleGetPengaturan() {
+  const data = SS.getSheetByName("Pengaturan_Ujian").getDataRange().getValues();
+  data.shift(); // hapus header
+
+  return responJSON(data);
+}
+
 
 // Tambahkan inisialisasi awal
 window.onload = muatJadwal;
