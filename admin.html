@@ -3,138 +3,151 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin CBT SMK</title>
+<title>Master Admin - SMK Mandiri</title>
 
 <style>
 :root {
-  --sidebar:#2c3e50;
-  --bg:#f4f6f9;
-  --blue:#3498db;
-  --green:#28a745;
-  --red:#e74c3c;
+    --sidebar: #2c3e50;
+    --bg: #f4f6f9;
+    --blue: #3498db;
+    --green: #28a745;
+    --red: #e74c3c;
+    --orange: #f39c12;
 }
-
-body { display:flex; margin:0; font-family:Segoe UI; background:var(--bg); }
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', sans-serif;
+}
+body { display: flex; background: var(--bg); }
 
 #sidebar {
-  width:250px; height:100vh;
-  background:var(--sidebar); color:white;
-  position:fixed;
+    width: 260px;
+    height: 100vh;
+    background: var(--sidebar);
+    color: white;
+    position: fixed;
 }
-
 .side-header {
-  padding:20px; text-align:center;
-  font-weight:bold; border-bottom:1px solid #444;
+    padding: 20px;
+    font-weight: bold;
+    border-bottom: 1px solid #4b545c;
+    text-align: center;
 }
-
 .nav-item {
-  padding:15px; cursor:pointer;
+    padding: 15px 25px;
+    cursor: pointer;
 }
-.nav-item:hover,.active {
-  background:#34495e;
+.nav-item.active {
+    background: rgba(255,255,255,0.1);
+    border-left: 5px solid var(--blue);
 }
 
 #main {
-  margin-left:250px;
-  padding:25px;
-  width:100%;
+    flex: 1;
+    margin-left: 260px;
+    padding: 30px;
 }
 
 .panel {
-  display:none;
-  background:white;
-  padding:20px;
-  border-radius:8px;
+    background: white;
+    padding: 25px;
+    border-radius: 8px;
+    display: none;
 }
-.panel.active { display:block; }
+.panel.active { display: block; }
 
-input,select,textarea {
-  width:100%; padding:10px;
-  margin:6px 0;
-  border:1px solid #ddd;
-  border-radius:5px;
+input, select, textarea {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+    border: 1px solid #ddd;
+    border-radius: 5px;
 }
 
 .btn {
-  padding:10px;
-  border:none;
-  color:white;
-  cursor:pointer;
-  border-radius:5px;
+    padding: 10px;
+    border: none;
+    color: white;
+    cursor: pointer;
+    border-radius: 5px;
 }
-.btn-blue { background:var(--blue); }
-.btn-green { background:var(--green); }
-.btn-red { background:var(--red); }
+.btn-blue { background: var(--blue); }
 
-table {
-  width:100%;
-  border-collapse:collapse;
-}
-td,th {
-  border:1px solid #eee;
-  padding:8px;
+select[multiple] {
+    height: 100px;
 }
 </style>
 </head>
 
 <body>
 
+<!-- SIDEBAR -->
 <div id="sidebar">
-  <div class="side-header">ADMIN CBT</div>
-  <div class="nav-item active" onclick="showPanel('dash',this)">Dashboard</div>
-  <div class="nav-item" onclick="showPanel('soal',this)">Kelola Soal</div>
+    <div class="side-header">ADMIN SMK MANDIRI</div>
+    <div class="nav-item active" onclick="showPanel('p-soal', this)">📝 Kelola Soal</div>
 </div>
 
+<!-- MAIN -->
 <div id="main">
 
-<!-- DASHBOARD -->
-<div id="dash" class="panel active">
-  <h2>Jadwal Ujian</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Mapel</th>
-        <th>Kelas</th>
-        <th>Jurusan</th>
-        <th>Status</th>
-      </tr>
-    </thead>
-    <tbody id="jadwal"></tbody>
-  </table>
-</div>
+<div id="p-soal" class="panel active">
 
-<!-- SOAL -->
-<div id="soal" class="panel">
+<h3>Form Input/Edit Soal</h3>
 
-<h3>Input Soal (Support Multi Kelas)</h3>
+<input type="hidden" id="edit-id">
 
 <label>Nama Mapel</label>
-<input id="mapel">
+<input type="text" id="i-mapel-nama">
 
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+
+<div>
 <label>Tingkat</label>
-<select id="tingkat">
+<select id="i-tingkat">
 <option>X</option>
 <option>XI</option>
 <option>XII</option>
 </select>
+</div>
 
-<label>Jurusan (Multi)</label>
-<select id="jurusan" multiple>
+<div>
+<label>Jurusan</label>
+<select id="i-jurusan" multiple>
 <option value="umum">Umum</option>
 <option value="TSM">TSM</option>
 <option value="BP">BP</option>
 <option value="AK">AK</option>
 </select>
+</div>
 
-<!-- 🔥 INI YANG PALING PENTING -->
-<label>Kelas / Rombel (Bisa Lebih dari 1)</label>
-<input id="kelas"
-placeholder="Contoh: XI TSM 1, XI TSM 2, XI BP">
+<div>
+<label>Tipe</label>
+<select id="i-tipe">
+<option value="PG">PG</option>
+<option value="IS">Isian</option>
+</select>
+</div>
 
-<small>Gunakan koma untuk banyak kelas</small>
+</div>
+
+<!-- 🔥 BAGIAN YANG DIUBAH -->
+<label>Rombel (Bisa pilih lebih dari 1)</label>
+<select id="i-rombel-multi" multiple>
+<option value="X TSM 1">X TSM 1</option>
+<option value="X TSM 2">X TSM 2</option>
+<option value="X BP 1">X BP 1</option>
+<option value="X AK 1">X AK 1</option>
+</select>
+
+<small>Bisa pilih lebih dari 1 kelas</small>
+
+<!-- fallback lama -->
+<input type="text" id="i-rombel" placeholder="Atau isi manual jika perlu">
 
 <label>Pertanyaan</label>
-<textarea id="soalText"></textarea>
+<textarea id="q-text"></textarea>
 
 <label>Opsi</label>
 <input id="o1" placeholder="A">
@@ -143,52 +156,36 @@ placeholder="Contoh: XI TSM 1, XI TSM 2, XI BP">
 <input id="o4" placeholder="D">
 
 <label>Kunci</label>
-<input id="kunci">
+<input id="q-kunci">
 
-<button class="btn btn-blue" onclick="simpan()">Simpan</button>
+<button class="btn btn-blue" onclick="simpanSoal()">Simpan</button>
 
 </div>
-
 </div>
 
 <script>
+function simpanSoal() {
 
-function showPanel(id,el){
- document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'))
- document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'))
- document.getElementById(id).classList.add('active')
- el.classList.add('active')
+    // 🔥 ambil MULTI ROMBEL
+    const multi = document.getElementById("i-rombel-multi");
+    const rombels = Array.from(multi.selectedOptions).map(o => o.value);
+
+    // fallback kalau kosong
+    const rombelManual = document.getElementById("i-rombel").value;
+
+    const tingkatFinal = rombels.length > 0 
+        ? rombels.join(", ")
+        : rombelManual;
+
+    const data = {
+        mapel: document.getElementById("i-mapel-nama").value,
+        tingkat: tingkatFinal,
+        soal: document.getElementById("q-text").value
+    };
+
+    console.log(data);
+    alert("Data siap dikirim ✅");
 }
-
-async function simpan(){
-
- const jurusan = Array.from(document.getElementById("jurusan").selectedOptions)
- .map(o=>o.value).join(",")
-
- const data = {
-  action:"inputSoal",
-  mapel:document.getElementById("mapel").value,
-  tingkat:document.getElementById("tingkat").value,
-  jurusan:jurusan,
-
-  // 🔥 MULTI KELAS
-  kelas:document.getElementById("kelas").value,
-
-  pertanyaan:document.getElementById("soalText").value,
-  opsi:[
-    o1.value,o2.value,o3.value,o4.value
-  ],
-  kunci:kunci.value
- }
-
- await fetch("YOUR_URL",{
-  method:"POST",
-  body:JSON.stringify(data)
- })
-
- alert("Soal tersimpan")
-}
-
 </script>
 
 </body>
