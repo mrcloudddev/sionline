@@ -2,7 +2,7 @@
  * CBT SMK - CLIENT FINAL STABLE UI + FIX TOTAL
  */
 
-const BASE_URL = "https://script.google.com/macros/s/AKfycby8CN5r6EELdna7N99qLnjzjxa2xeba3aIoojL5hWzHWdQIyMCsIfh_yI6WV_VBHQA6/exec";
+const BASE_URL = "https://script.google.com/macros/s/AKfycbxttRQYJ01rfAWm2CdeEh1OuQT4-2U9zFYBBpolHlPFK8fFcCWIjD3wxvxEwH76Z_w3/exec";
 
 let dataSiswaAktif = {};
 let timerInterval;
@@ -189,13 +189,14 @@ async function submitJawaban(auto = false) {
 
     try {
         await fetch(BASE_URL, {
-            method: 'POST',
-            body: JSON.stringify({
-                action: "submitJawaban",
-                ...dataSiswaAktif,
-                jawaban: jawaban
-            })
-        });
+    method: 'POST',
+    body: JSON.stringify({
+        action: "submitJawaban",
+        ...dataSiswaAktif,
+        mapel: document.getElementById('mapel-aktif').innerText, // 🔥 WAJIB
+        jawaban: jawaban
+        })
+    });
 
         alert("✅ Berhasil dikirim");
         localStorage.clear();
