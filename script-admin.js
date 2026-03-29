@@ -30,7 +30,10 @@ async function muatJadwal() {
         return `
         <tr>
             <td>${v[0]}</td>
-            <td>${v[1]} | ${v[2]}</td>
+            <td>
+                <b>${v[1]}</b><br>
+                <small>${v[2]}</small>
+            </td>
             <td>${v[3]}</td>
             <td>
                 <button onclick="toggleUjian('${v[0]}','${v[1]}','${v[2]}','${aktif ? 'Nonaktif':'Aktif'}')">
@@ -57,13 +60,22 @@ async function toggleUjian(mapel, tingkat, jurusan, status) {
 // ================= INPUT SOAL =================
 async function simpanSoal() {
 
+    // ambil multi jurusan
     const jurusanSelect = document.getElementById('i-jurusan');
     const jurusan = Array.from(jurusanSelect.selectedOptions)
         .map(o => o.value)
         .join(", ");
 
-    const tingkat = document.getElementById('i-rombel').value
-        || document.getElementById('i-tingkat').value;
+    // 🔥 SUPPORT MULTI ROMBEL (INI YANG DITAMBAH)
+    let tingkatInput = document.getElementById('i-rombel').value;
+    let tingkat;
+
+    if (tingkatInput && tingkatInput.includes(",")) {
+        // contoh: XI TSM 1, XI TSM 2
+        tingkat = tingkatInput.split(",").map(k => k.trim()).join(",");
+    } else {
+        tingkat = tingkatInput || document.getElementById('i-tingkat').value;
+    }
 
     const opsi = [
         document.getElementById('o1').value,
@@ -75,7 +87,7 @@ async function simpanSoal() {
     const data = {
         action: "inputSoal",
         id: "Q-" + Date.now(),
-        tingkat: tingkat,
+        tingkat: tingkat, // ✅ sudah support multi kelas
         jurusan: jurusan,
         mapel: document.getElementById('i-mapel-nama').value,
         tipe: document.getElementById('i-tipe').value,
@@ -103,12 +115,18 @@ async function muatDatabaseSoal() {
     const r = await fetch(`${BASE_URL}?action=getDatabaseSoal`);
     const d = await r.json();
 
-    body.innerHTML = d.map(v => `
+    body.innerHTML = d.map(v => {
+
+        // 🔥 rapihin tampilan multi kelas
+        const kelasList = (v[1] || "").split(",").map(k => k.trim()).join("<br>");
+
+        return `
         <tr>
             <td>${v[0]}</td>
             <td>
                 <b>${v[8]}</b><br>
-                <small>${v[1]} | ${v[2]}</small>
+                <small>${kelasList}</small><br>
+                <small>${v[2]}</small>
             </td>
             <td>${v[3]}</td>
             <td>${(v[4] || "").substring(0,40)}</td>
@@ -116,7 +134,7 @@ async function muatDatabaseSoal() {
                 <button onclick="hapusSoal('${v[0]}')">Hapus</button>
             </td>
         </tr>
-    `).join('');
+    `}).join('');
 }
 
 
@@ -166,7 +184,7 @@ async function muatRekapNilai() {
 
     body.innerHTML = d.map(v => `
         <tr>
-            <td>${new Date(v[0]).toLocaleString()}</td>
+            <td>${v[0] ? new Date(v[0]).toLocaleString() : '-'}</td>
             <td>${v[1]}</td>
             <td>${v[2]}</td>
             <td>${v[4]}</td>
