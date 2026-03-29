@@ -1,5 +1,5 @@
 /**
- * CBT SMK - CLIENT FIX FINAL (ANTI SOAL KOSONG)
+ * CBT SMK - CLIENT FINAL FIX TOTAL (SOAL PASTI MUNCUL)
  */
 
 const BASE_URL = "https://script.google.com/macros/s/AKfycbw-kYl3iXufprFMAnIq0kvFkDovAUHQ-jgB-__7yjOKo-mHq2CHT_meK9YTS27i4ys4/exec";
@@ -16,14 +16,23 @@ async function prosesLogin() {
         const resp = await fetch(`${BASE_URL}?action=login&user=${encodeURIComponent(user)}`);
         const res = await resp.json();
 
+        console.log("LOGIN RES:", res);
+
         if (res.status === "Sukses") {
             res.nis = user;
+
+            if (!res.kelas || !res.jurusan) {
+                alert("Data siswa tidak lengkap (kelas/jurusan kosong)");
+                return;
+            }
+
             localStorage.setItem("sesi_siswa", JSON.stringify(res));
             jalankanUjian(res);
         } else {
             alert(res.pesan);
         }
-    } catch {
+    } catch (e) {
+        console.log(e);
         alert("Server error / koneksi putus");
     }
 }
@@ -44,8 +53,17 @@ function jalankanUjian(res) {
 // ================= LOAD =================
 async function cekStatusDanLoadSoal() {
     try {
-        const resp = await fetch(`${BASE_URL}?action=getStatusUjian`);
+        const kelas = encodeURIComponent(dataSiswaAktif.kelas || "");
+        const jurusan = encodeURIComponent(dataSiswaAktif.jurusan || "");
+
+        console.log("DEBUG KELAS:", kelas);
+        console.log("DEBUG JURUSAN:", jurusan);
+
+        // ===== STATUS UJIAN =====
+        const resp = await fetch(`${BASE_URL}?action=getStatusUjian&kelas=${kelas}&jurusan=${jurusan}`);
         const res = await resp.json();
+
+        console.log("STATUS UJIAN:", res);
 
         if (res.status !== "Aktif") {
             alert("Ujian belum aktif!");
@@ -54,18 +72,19 @@ async function cekStatusDanLoadSoal() {
 
         document.getElementById('mapel-aktif').innerText = res.mapelAktif;
 
-        mulaiTimer(res.durasi);
+        mulaiTimer(res.durasi || 60);
 
-        // 🔥 FIX: TANPA PARAMETER (sesuai backend kamu)
-        const soalResp = await fetch(`${BASE_URL}?action=getSoal`);
+        // ===== AMBIL SOAL =====
+        const soalResp = await fetch(`${BASE_URL}?action=getSoal&kelas=${kelas}&jurusan=${jurusan}`);
         const soal = await soalResp.json();
 
-        console.log("DATA SOAL:", soal); // DEBUG
+        console.log("DATA SOAL:", soal);
 
         renderSoal(soal);
 
     } catch (e) {
         console.log("ERROR LOAD:", e);
+        alert("Gagal load soal");
     }
 }
 
@@ -79,7 +98,8 @@ function renderSoal(soal) {
             <h2 style="color:red">❌ SOAL TIDAK MUNCUL</h2>
             <p>Cek:</p>
             <ul style="text-align:left;display:inline-block">
-                <li>Mapel harus sama persis</li>
+                <li>Kelas & jurusan harus sama</li>
+                <li>Mapel harus sama</li>
                 <li>Status soal = aktif</li>
                 <li>Status ujian = aktif</li>
             </ul>
@@ -119,6 +139,8 @@ function simpanJawabanLokal(id, val) {
 // ================= TIMER =================
 function mulaiTimer(menit) {
     let s = menit * 60;
+
+    clearInterval(timerInterval);
 
     timerInterval = setInterval(() => {
         if (s <= 0) {
@@ -162,7 +184,8 @@ async function submitJawaban(auto = false) {
         localStorage.clear();
         location.reload();
 
-    } catch {
+    } catch (e) {
+        console.log(e);
         alert("❌ Gagal kirim");
     }
 }
@@ -170,5 +193,8 @@ async function submitJawaban(auto = false) {
 // ================= RESTORE =================
 window.onload = () => {
     const sesi = localStorage.getItem("sesi_siswa");
-    if (sesi) jalankanUjian(JSON.parse(sesi));
+    if (sesi) {
+        console.log("RESTORE SESSION");
+        jalankanUjian(JSON.parse(sesi));
+    }
 };
